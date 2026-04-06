@@ -1,0 +1,181 @@
+import 'package:coldcall/core/di.dart';
+import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/features/history/record_card.dart';
+import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/features/user_session_vm.dart';
+import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+import 'package:intl/intl.dart';
+
+class DealCard extends StatefulWidget {
+  final Deal deal;
+
+  const DealCard({super.key, required this.deal});
+
+  @override
+  State<DealCard> createState() => _DealCardState();
+}
+
+class _DealCardState extends State<DealCard> {
+  final _model = di<HistoryVm>();
+
+  var _isEditing = false;
+  late final _titleEditController = TextEditingController(text: widget.deal.title);
+
+  static final _dateTimeFormat = DateFormat('dd.MM.yyyy HH:mm ');
+  static final timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
+  static final _dateTextStyle = TextStyle(fontSize: 14, color: Colors.grey);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _model,
+      builder: (context, _) {
+        return Column(
+          children: [
+            InkWell(
+              onTap: () => _model.expandCollapseDeal(widget.deal),
+              onLongPress: () => _showDeleteDealDialog(context, widget.deal),
+              child: PopScope(
+                canPop: !_isEditing,
+                onPopInvokedWithResult: (didPop, result) {
+                  if (!didPop) _cancelEditing();
+                },
+                child: Card(
+                  margin: .fromLTRB(0, 4, 0, 4),
+                  color: Colors.white24,
+                  child: Padding(
+                    padding: const .fromLTRB(10, 7, 0, 7),
+                    child: Column(
+                      crossAxisAlignment: .stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  if (!_isEditing)
+                                    RichText(
+                                      // maxLines: 3,
+                                      // overflow: .ellipsis,
+                                      text: TextSpan(
+                                        children: [
+                                          WidgetSpan(
+                                            child: Row(
+                                              mainAxisSize: .min,
+                                              children: [
+                                                if (widget.deal.hasCalls) Icon(Icons.call, size: 14),
+                                                if (widget.deal.hasAudios) Icon(Icons.mic, size: 17),
+                                                if (widget.deal.hasCalls || widget.deal.hasAudios) Gap(8),
+                                              ],
+                                            ),
+                                          ),
+                                          TextSpan(text: widget.deal.title, style: TextStyle(fontSize: 15)),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    TextField(
+                                      controller: _titleEditController,
+                                      autofocus: true,
+                                      maxLines: 3,
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: _saveEditing,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (!_isEditing)
+                              PopupMenuButton(
+                                itemBuilder: (context) => [
+                                  // PopupMenuItem(onTap: () => _model.expandCollapseDeal(widget.deal), child: Text('Детали...')),
+                                  PopupMenuItem(
+                                    onTap: () => _model.showDialer(context, deal: widget.deal, phoneNumber: widget.deal.lastPhoneNumber),
+                                    child: Text('Позвонить'),
+                                  ),
+                                  PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(widget.deal), child: Text('Записать')),
+                                  PopupMenuItem(onTap: () => setState(() => _isEditing = true), child: Text('Редактировать заголовок')),
+                                  PopupMenuItem(onTap: () => _showDeleteDealDialog(context, widget.deal), child: Text('Удалить')),
+                                ],
+                              )
+                            else
+                              IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
+                          ],
+                        ),
+                        Padding(
+                          padding: const .fromLTRB(0, 0, 5, 0),
+                          child: Row(
+                            children: [
+                              Text(_dateTimeFormat.format(widget.deal.created), style: _dateTextStyle),
+                              Spacer(),
+                              if (widget.deal.lastModified != widget.deal.created)
+                                Text(_dateTimeFormat.format(widget.deal.lastModified), style: _dateTextStyle),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_model.currentExpandedDealId == widget.deal.id) _buildDealRecordsList(widget.deal),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDealRecordsList(Deal deal) {
+    return Column(children: [...deal.records.map((record) => RecordCard(record: record))]);
+  }
+
+  void _showDeleteDealDialog(BuildContext context, Deal deal) {
+    _model.expandDeal(deal);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text('Удалить дело?', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .start,
+          children: [
+            Text(
+              'Вы уверены, что хотите удалить дело от ${timeDateFormat.format(deal.created)}?',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            if (deal.records.isNotEmpty) ...[
+              Gap(15),
+              Text('Внимание!!!\nДело содержит ${deal.records.length} записей истории!', style: TextStyle(color: Colors.red)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => _deleteDeal(deal),
+            child: const Text('Удалить', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(onPressed: Navigator.of(context).pop, child: const Text('Отмена')),
+        ],
+      ),
+    );
+  }
+
+  void _cancelEditing() {
+    _titleEditController.text = widget.deal.title;
+    setState(() => _isEditing = false);
+  }
+
+  void _saveEditing(String title) async {
+    widget.deal.updateTitle(title);
+    setState(() => _isEditing = false);
+    await _model.updateDeal(widget.deal);
+  }
+
+  void _deleteDeal(Deal deal) {
+    _model.deleteDeal(deal);
+    Navigator.pop(context);
+  }
+}
