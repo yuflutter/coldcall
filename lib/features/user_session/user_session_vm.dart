@@ -10,6 +10,7 @@ class UserSessionVm with SimpleChangeNotifier {
   UserSettings all = UserSettings(isRecordingEnabled: true, isTranscriptionEnabled: true);
 
   // одноразовый флаг с геттером
+  // TODO: пиздец как криво, исправить на стрим или эффект
   Deal? _turnToRecordForDeal;
 
   Deal? get turnToRecordForDeal {

@@ -173,12 +173,10 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   void mergeFrom(covariant HistoryRecord remote) {
     super.mergeFrom(remote);
 
-    if (remote.lastModified.isAfter(lastModified)) {
-      if (remote.phoneNumber != null) _phoneNumber = remote.phoneNumber;
-      if (remote.audioFileName != null) _audioFileName = remote.audioFileName;
-      if (remote.textTranscription != null) _textTranscription = remote.textTranscription;
-      if (remote.note != null) _note = remote.note;
-    }
+    if (remote.phoneNumber != null) _phoneNumber = remote.phoneNumber;
+    if (remote.audioFileName != null) _audioFileName = remote.audioFileName;
+    if (remote.textTranscription != null) _textTranscription = remote.textTranscription;
+    if (remote.note != null) _note = remote.note;
   }
 
   Future<void> saveToStorage() async {

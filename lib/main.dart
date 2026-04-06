@@ -8,12 +8,12 @@ import 'package:coldcall/core/error_presenters.dart';
 import 'package:coldcall/core/simple_future_listenable_builders.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_screen.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_vm.dart';
-import 'package:coldcall/features/user_session_vm.dart';
+import 'package:coldcall/features/user_session/user_session_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'features/dialer/_camera_dialer_screen.dart';
 import 'features/history/_history_screen.dart';
-import 'features/user_session_screen.dart';
+import 'features/user_session/user_session_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,7 +1,7 @@
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
-import 'package:coldcall/features/user_session_vm.dart';
+import 'package:coldcall/features/user_session/user_session_vm.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_vm_impl.dart';
 import 'package:coldcall/features/recorder/recognizer_service_vosk.dart';

@@ -1,5 +1,5 @@
 import 'package:coldcall/core/di.dart';
-import 'package:coldcall/features/user_session_vm.dart';
+import 'package:coldcall/features/user_session/user_session_vm.dart';
 import 'package:coldcall/widgets/contact_author_widget.dart';
 import 'package:flutter/material.dart';
 

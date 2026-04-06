@@ -2,7 +2,7 @@ import 'package:coldcall/core/di.dart';
 import 'package:coldcall/entities/_all_syncable_entities.dart';
 import 'package:coldcall/features/history/record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
-import 'package:coldcall/features/user_session_vm.dart';
+import 'package:coldcall/features/user_session/user_session_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
@@ -17,10 +17,11 @@ class DealCard extends StatefulWidget {
 }
 
 class _DealCardState extends State<DealCard> {
+  late final _deal = widget.deal;
   final _model = di<HistoryVm>();
 
   var _isEditing = false;
-  late final _titleEditController = TextEditingController(text: widget.deal.title);
+  late final _titleEditController = TextEditingController(text: _deal.title);
 
   static final _dateTimeFormat = DateFormat('dd.MM.yyyy HH:mm ');
   static final timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
@@ -34,8 +35,8 @@ class _DealCardState extends State<DealCard> {
         return Column(
           children: [
             InkWell(
-              onTap: () => _model.expandCollapseDeal(widget.deal),
-              onLongPress: () => _showDeleteDealDialog(context, widget.deal),
+              onTap: () => _model.expandCollapseDeal(_deal),
+              onLongPress: () => _showDeleteDealDialog(context, _deal),
               child: PopScope(
                 canPop: !_isEditing,
                 onPopInvokedWithResult: (didPop, result) {
@@ -50,6 +51,7 @@ class _DealCardState extends State<DealCard> {
                       crossAxisAlignment: .stretch,
                       children: [
                         Row(
+                          crossAxisAlignment: .start,
                           children: [
                             Expanded(
                               child: Stack(
@@ -64,13 +66,13 @@ class _DealCardState extends State<DealCard> {
                                             child: Row(
                                               mainAxisSize: .min,
                                               children: [
-                                                if (widget.deal.hasCalls) Icon(Icons.call, size: 14),
-                                                if (widget.deal.hasAudios) Icon(Icons.mic, size: 17),
-                                                if (widget.deal.hasCalls || widget.deal.hasAudios) Gap(8),
+                                                if (_deal.hasCalls) Icon(Icons.call, size: 14),
+                                                if (_deal.hasAudios) Icon(Icons.mic, size: 17),
+                                                if (_deal.hasCalls || _deal.hasAudios) Gap(8),
                                               ],
                                             ),
                                           ),
-                                          TextSpan(text: widget.deal.title, style: TextStyle(fontSize: 15)),
+                                          TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
                                         ],
                                       ),
                                     )
@@ -88,14 +90,14 @@ class _DealCardState extends State<DealCard> {
                             if (!_isEditing)
                               PopupMenuButton(
                                 itemBuilder: (context) => [
-                                  // PopupMenuItem(onTap: () => _model.expandCollapseDeal(widget.deal), child: Text('Детали...')),
+                                  // PopupMenuItem(onTap: () => _model.expandCollapseDeal(_deal), child: Text('Детали...')),
                                   PopupMenuItem(
-                                    onTap: () => _model.showDialer(context, deal: widget.deal, phoneNumber: widget.deal.lastPhoneNumber),
+                                    onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
                                     child: Text('Позвонить'),
                                   ),
-                                  PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(widget.deal), child: Text('Записать')),
+                                  PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(_deal), child: Text('Записать')),
                                   PopupMenuItem(onTap: () => setState(() => _isEditing = true), child: Text('Редактировать заголовок')),
-                                  PopupMenuItem(onTap: () => _showDeleteDealDialog(context, widget.deal), child: Text('Удалить')),
+                                  PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                 ],
                               )
                             else
@@ -106,10 +108,10 @@ class _DealCardState extends State<DealCard> {
                           padding: const .fromLTRB(0, 0, 5, 0),
                           child: Row(
                             children: [
-                              Text(_dateTimeFormat.format(widget.deal.created), style: _dateTextStyle),
+                              Text(_dateTimeFormat.format(_deal.created), style: _dateTextStyle),
                               Spacer(),
-                              if (widget.deal.lastModified != widget.deal.created)
-                                Text(_dateTimeFormat.format(widget.deal.lastModified), style: _dateTextStyle),
+                              if (_deal.lastModified != _deal.created)
+                                Text(_dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
                             ],
                           ),
                         ),
@@ -119,7 +121,7 @@ class _DealCardState extends State<DealCard> {
                 ),
               ),
             ),
-            if (_model.currentExpandedDealId == widget.deal.id) _buildDealRecordsList(widget.deal),
+            if (_model.currentExpandedDealId == _deal.id) _buildDealRecordsList(_deal),
           ],
         );
       },
@@ -164,14 +166,14 @@ class _DealCardState extends State<DealCard> {
   }
 
   void _cancelEditing() {
-    _titleEditController.text = widget.deal.title;
+    _titleEditController.text = _deal.title;
     setState(() => _isEditing = false);
   }
 
   void _saveEditing(String title) async {
-    widget.deal.updateTitle(title);
+    _deal.updateTitle(title);
     setState(() => _isEditing = false);
-    await _model.updateDeal(widget.deal);
+    await _model.updateDeal(_deal);
   }
 
   void _deleteDeal(Deal deal) {

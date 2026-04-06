@@ -14,26 +14,27 @@ class RecordCard extends StatefulWidget {
 }
 
 class _RecordCardState extends State<RecordCard> {
+  late final _record = widget.record;
   final _model = di<HistoryVm>();
 
   BuildContext? _detailsBottomSheetContext;
   bool get _isDetailsExpanded => (_detailsBottomSheetContext != null);
 
   var _isEditing = false;
-  late final _noteEditController = TextEditingController(text: widget.record.note);
+  late final _noteEditController = TextEditingController(text: _record.note);
 
   void _startEditing() {
     setState(() => _isEditing = true);
   }
 
   void _cancelEditing() {
-    _noteEditController.text = widget.record.note ?? '';
+    _noteEditController.text = _record.note ?? '';
     setState(() => _isEditing = false);
   }
 
   void _saveEditing(String note) async {
-    widget.record.updateNote(note.trim());
-    await _model.updateDeal(widget.record.deal!);
+    _record.updateNote(note.trim());
+    await _model.updateDeal(_record.deal!);
     _cancelEditing();
   }
 
@@ -52,7 +53,7 @@ class _RecordCardState extends State<RecordCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isAudioPlaying = (_model.currentPlayingRecordId == widget.record.id);
+    final isAudioPlaying = (_model.currentPlayingRecordId == _record.id);
 
     return PopScope(
       canPop: !_isEditing,
@@ -63,12 +64,12 @@ class _RecordCardState extends State<RecordCard> {
         margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
         color: Colors.white12,
         child: InkWell(
-          onTap: (widget.record.textTranscription != null)
-              ? () => _showDetails(widget.record)
-              : (widget.record.phoneNumber != null)
-              ? () => _call(widget.record)
+          onTap: (_record.textTranscription != null)
+              ? () => _showDetails(_record)
+              : (_record.phoneNumber != null)
+              ? () => _call(_record)
               : null,
-          onLongPress: () => _showDeleteRecordDialog(context, widget.record),
+          onLongPress: () => _showDeleteRecordDialog(context, _record),
           child: Padding(
             padding: .fromLTRB(10, 0, 0, 5),
             child: Column(
@@ -79,16 +80,30 @@ class _RecordCardState extends State<RecordCard> {
                     Row(
                       mainAxisSize: .min,
                       children: [
-                        if (widget.record.phoneNumber != null) Icon(Icons.call, size: 14),
-                        if (widget.record.audioFileName != null) Icon(Icons.mic, size: 17),
+                        if (_record.phoneNumber != null) Icon(Icons.call, size: 14),
+                        if (_record.audioFileName != null) Icon(Icons.mic, size: 17),
                         Gap(8),
                       ],
                     ),
-                    _buildTimeDate(widget.record.startTime),
+                    _buildTimeDate(_record.startTime),
                     Spacer(),
-                    Text(formatDuration(widget.record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    Gap(10),
 
-                    if (widget.record.phoneNumber != null)
+                    if (_record.audioFileName != null) ...[
+                      SizedBox(
+                        height: 40,
+                        child: IconButton(
+                          padding: .zero,
+                          icon: (isAudioPlaying)
+                              ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
+                              : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
+                          onPressed: () => _model.startStopAudio(context, _record),
+                        ),
+                      ),
+                    ],
+
+                    if (_record.phoneNumber != null)
                       if (!_isEditing)
                         SizedBox(
                           height: 40,
@@ -101,31 +116,17 @@ class _RecordCardState extends State<RecordCard> {
                         )
                       else
                         IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
-
-                    if (widget.record.audioFileName != null) ...[
-                      Gap(8),
-                      SizedBox(
-                        height: 40,
-                        child: IconButton(
-                          padding: .zero,
-                          icon: (isAudioPlaying)
-                              ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
-                              : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
-                          onPressed: () => _model.startStopAudio(context, widget.record),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
 
                 if (isAudioPlaying && !_isDetailsExpanded) AudioPlayerControl(),
 
-                if (widget.record.phoneNumber != null) _buildPhoneNumber(widget.record),
+                if (_record.phoneNumber != null) _buildPhoneNumber(_record),
 
-                if (widget.record.note != null && !_isEditing)
+                if (_record.note != null && !_isEditing)
                   Padding(
                     padding: .fromLTRB(0, 5, 5, 0),
-                    child: Text(widget.record.note!, style: TextStyle(fontSize: 15)),
+                    child: Text(_record.note!, style: TextStyle(fontSize: 15)),
                   ),
                 if (_isEditing)
                   TextField(
@@ -135,10 +136,12 @@ class _RecordCardState extends State<RecordCard> {
                     onSubmitted: _saveEditing,
                   ),
 
-                if (widget.record.textTranscription != null)
+                if (_record.textTranscription != null && _record.phoneNumber != null) Gap(8),
+
+                if (_record.textTranscription != null)
                   Padding(
                     padding: .fromLTRB(0, 0, 5, 0),
-                    child: Text(widget.record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
+                    child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
                   ),
               ],
             ),
