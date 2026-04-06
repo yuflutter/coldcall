@@ -39,8 +39,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       mainAxisSize: .min,
                       crossAxisAlignment: .start,
                       children: [
-                        Text('Синхронизировано'),
-                        Text(_timeDateFormat.format(_model.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 16)),
+                        Text('Синхронизировано', style: TextStyle(fontSize: 15)),
+                        Text(_timeDateFormat.format(_model.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
                       ],
                     )
                   : Text('Настроить синхронизацию:'),

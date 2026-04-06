@@ -8,9 +8,7 @@ import 'package:intl/intl.dart';
 
 class RecordCard extends StatefulWidget {
   final HistoryRecord record;
-
   const RecordCard({super.key, required this.record});
-
   @override
   State<RecordCard> createState() => _RecordCardState();
 }

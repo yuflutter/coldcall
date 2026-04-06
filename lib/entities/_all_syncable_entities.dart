@@ -100,7 +100,7 @@ class Deal extends Syncable with DealMappable {
           localRecord.mergeFrom(remoteRecord);
         } else {
           remoteRecord.mergeFrom(localRecord);
-          _records.add(remoteRecord);
+          _records.add(remoteRecord..deal = this);
           localRecord.markDeleted();
         }
         continue;

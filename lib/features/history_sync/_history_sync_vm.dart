@@ -174,20 +174,20 @@ class HistorySyncVm with SimpleChangeNotifier {
           final deals = (jsonDecode(incoming) as List).map((e) => DealMapper.fromJson(e)).toList();
           notify(() => stage = .missingFileNamesSwap);
 
-          final missingFileNames = await _processIncomingJson(deals);
-          _wsSend(jsonEncode(missingFileNames));
+          _missingFileNames = await _processIncomingJson(deals);
+          _wsSend(jsonEncode(_missingFileNames));
 
         // принимаем список путей к файлам, отправляем сами файлы, в ответ ожидаем того же
         case .missingFileNamesSwap:
-          _missingFileNames = (jsonDecode(incoming) as List).map((e) => e as String).toList();
+          final missingFileNames = (jsonDecode(incoming) as List).map((e) => e as String).toList();
           notify(() => stage = .missingFilesSwap);
 
-          for (final fileName in _missingFileNames!) {
+          for (final fileName in missingFileNames) {
             final file = File('$_localFilePath/$fileName');
-            if (!file.existsSync()) {
-              throw 'File "$fileName" is not found';
-            } else {
+            if (file.existsSync()) {
               _wsSend(await file.readAsBytes());
+            } else {
+              throw 'File "$fileName" is not found';
             }
           }
           _wsSend(jsonEncode(true));
@@ -223,10 +223,10 @@ class HistorySyncVm with SimpleChangeNotifier {
     for (final remoteDeal in remoteDeals) {
       // формируем список имен файлов, ссылки на которые есть, а самих файлов нет
       if (!remoteDeal.deleted) {
-        for (final record in remoteDeal.records) {
-          if (record.audioFileName != null) {
-            if (!File(await record.audioFilePath()!).existsSync()) {
-              missingFileNames.add(record.audioFileName!);
+        for (final remoteRecord in remoteDeal.records) {
+          if (remoteRecord.audioFileName != null) {
+            if (!File(await remoteRecord.audioFilePath()!).existsSync()) {
+              missingFileNames.add(remoteRecord.audioFileName!);
             }
           }
         }
