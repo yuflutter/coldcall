@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:coldcall/app_config.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -35,7 +36,7 @@ class _ContactAuthorWidgetState extends State<ContactAuthorWidget> {
     //   ),
     // );
 
-    launchUrlString(authorContact, mode: .externalApplication);
+    launchUrlString(di<AppConfig>().authorContact, mode: .externalApplication);
 
     // Схлопываем плашку через таймаут
     _authorPlateTimer?.cancel();
@@ -75,11 +76,11 @@ class _ContactAuthorWidgetState extends State<ContactAuthorWidget> {
             ),
             secondChild: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 16),
                 SizedBox(width: 8),
                 Text(
-                  authorContact,
+                  di<AppConfig>().authorContact,
                   style: TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ],

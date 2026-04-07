@@ -1,47 +1,38 @@
 import 'package:coldcall/app_config.dart';
-import 'package:coldcall/entities/detected_phone.dart';
+import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/log.dart';
+import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class PhoneDetectorService {
   final TextRecognizer _textRecognizer = TextRecognizer();
 
-  Future<List<DetectedPhone>> detectPhones(InputImage image) async {
+  Future<List<DetectedPhoneNumber>> detectPhones(InputImage image) async {
     try {
       final RecognizedText recognizedText = await _textRecognizer.processImage(image);
-      final List<DetectedPhone> detectedPhones = [];
+      final List<DetectedPhoneNumber> detectedPhones = [];
 
       for (TextBlock block in recognizedText.blocks) {
         final String text = block.text;
-        final matches = phoneRegex.allMatches(text);
+        final matches = di<AppConfig>().phoneNumberRegex.allMatches(text);
 
         for (Match match in matches) {
           final String phoneNumber = match.group(0) ?? '';
-          final String cleanNumber = _cleanPhoneNumber(phoneNumber);
+
+          final detectedPhone = DetectedPhoneNumber(originNumber: phoneNumber, boundingBox: block.boundingBox);
 
           // Проверяем минимальную длину (10 цифр)
-          if (cleanNumber.length >= 10) {
-            detectedPhones.add(DetectedPhone(phoneNumber: phoneNumber, cleanNumber: cleanNumber, boundingBox: block.boundingBox));
+          if (detectedPhone.isPhoneNumber) {
+            detectedPhones.add(detectedPhone);
           }
         }
       }
 
       return detectedPhones;
     } catch (e) {
-      print('Error detecting phones: $e');
+      Log('$PhoneDetectorService').err('Error detecting phones: $e', null);
       return [];
     }
-  }
-
-  String _cleanPhoneNumber(String phone) {
-    // Удаляем все символы кроме цифр и +
-    String cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
-
-    // Заменяем 8 в начале на +7 для российских номеров
-    if (cleaned.startsWith('8') && cleaned.length == 11) {
-      cleaned = '+7${cleaned.substring(1)}';
-    }
-
-    return cleaned;
   }
 
   void dispose() {

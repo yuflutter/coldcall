@@ -30,7 +30,7 @@ class HistorySyncVm with SimpleChangeNotifier {
   String get userLog => _userLog.toString();
   late final _log = Log('$HistorySyncVm', on: (m) => notify(() => _userLog.writeln(m)));
 
-  String get qrServerUrl => '${_qrUrlPrefix}ws://${status.serverIp}:$historySyncHttpPort';
+  String get qrServerUrl => '${_qrUrlPrefix}ws://${status.serverIp}:${di<AppConfig>().historySyncHttpPort}';
   HttpServer? _server;
   WebSocket? _socket;
 
@@ -80,8 +80,8 @@ class HistorySyncVm with SimpleChangeNotifier {
     if (serverIp == null) throw 'Не могу определить свой IP';
 
     try {
-      _server = await HttpServer.bind(InternetAddress.anyIPv4, historySyncHttpPort);
-      _log.inf('Listening on $serverIp:$historySyncHttpPort ...');
+      _server = await HttpServer.bind(InternetAddress.anyIPv4, di<AppConfig>().historySyncHttpPort);
+      _log.inf('Listening on $serverIp:${di<AppConfig>().historySyncHttpPort} ...');
 
       _server!.listen((request) async {
         try {

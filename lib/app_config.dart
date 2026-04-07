@@ -8,35 +8,54 @@ import 'package:coldcall/features/recorder/recognizer_service_vosk.dart';
 import 'package:coldcall/features/recorder/recognizer_service_sherpa_sync.dart';
 import 'package:coldcall/features/recorder/recognizer_service_sherpa_isolate.dart';
 
-/// Regex для поиска телефонных номеров
-final phoneRegex = RegExp(
-  r'(?:\+?\d{1,3}[\s\-\.]?)?' // Код страны (+7, 8)
-  r'(?:\(\d{3,5}\)|\d{3,5})' // Код города/оператора (3-5 цифр)
-  r'[\s\-\.]?' // Разделитель
-  r'\d{3,7}' // Основной номер (гибкая длина)
-  r'(?:[\s\-\.]?\d{2,4})*', // Хвосты номера
-  multiLine: true,
-);
+/// Реализации конфига могут быть разные для разных регионов и вариантов сборок
+class AppConfig {
+  /// Regex для поиска телефонных номеров в видеокадре
+  final phoneNumberRegex = RegExp(
+    r'(?:\+?\d{1,3}[\s\-\.]?)?' // Код страны (+7, 8)
+    r'(?:\(\d{3,5}\)|\d{3,5})' // Код города/оператора (3-5 цифр)
+    r'[\s\-\.]?' // Разделитель
+    r'\d{3,7}' // Основной номер (гибкая длина)
+    r'(?:[\s\-\.]?\d{2,4})*', // Хвосты номера
+    multiLine: true,
+  );
 
-/// Форматтер для показа номера перед набором
-final phoneFormatter = MaskTextInputFormatter(
-  mask: '+# (###) ###-##-##',
-  filter: {"#": RegExp(r'[0-9]')},
-  type: MaskAutoCompletionType.lazy,
-);
+  /// Приведение номера к состоянию уникального ключа
+  String cleanPhoneNumber(String phone) {
+    // Удаляем все символы кроме цифр и +
+    String cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
 
-/// Частота кадров для процессинга видео
-const frameProcessingRate = Duration(milliseconds: 500);
+    // Заменяем 8 в начале на +7 для российских номеров
+    if (cleaned.startsWith('8') && cleaned.length == 11) {
+      cleaned = '+7${cleaned.substring(1)}';
+    }
+    return cleaned;
+  }
 
-/// Порт синхронизации двух устройств, находящихся в одной сети WiFi
-const historySyncHttpPort = 8084;
+  /// Проверяем очищенный номер - является ли он номером телефона (слабовато, ну да ладно)
+  bool isPhoneNumber(String cleanNumber) => (cleanNumber.length >= 10);
 
-const authorContact = 'https://vk.com/evgeet';
-const supportEmail = 'evgeet@vk.com';
+  /// Форматтер для показа номера перед набором
+  final phoneNumberFormatter = MaskTextInputFormatter(
+    mask: '+# (###) ###-##-##',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
+  /// Частота кадров для процессинга видео
+  final frameProcessingRate = Duration(milliseconds: 300);
+
+  /// Порт синхронизации двух устройств, находящихся в одной сети WiFi
+  final historySyncHttpPort = 8084;
+
+  final authorContact = 'https://vk.com/evgeet';
+  final supportEmail = 'evgeet@vk.com';
+}
 
 /// Внедрение глобальных зависимостей + асинхронные инициализации уровня приложения
 Future<void> initApp() async {
   // Инжектим глобальные зависимости
+  DI.put(AppConfig());
   DI.put(Err());
   DI.put(UserSessionVm());
   DI.put(HistoryVm());

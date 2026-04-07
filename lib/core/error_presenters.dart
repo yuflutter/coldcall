@@ -1,4 +1,5 @@
 import 'package:coldcall/app_config.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:flutter/material.dart';
@@ -86,7 +87,7 @@ class _ErrorPresenterState extends State<ErrorPresenter> {
 
   // TODO: доделать кодировку, протестировать
   void _sendToSupport() {
-    final url = 'mailto:$supportEmail?subject=ColdCall: ${widget.userError.long ?? widget.userError.short})';
+    final url = 'mailto:${di<AppConfig>().supportEmail}?subject=ColdCall: ${widget.userError.long ?? widget.userError.short})';
     launchUrl(Uri.parse(url));
   }
 }

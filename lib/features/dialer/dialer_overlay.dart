@@ -1,4 +1,5 @@
 import 'package:coldcall/app_config.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
@@ -134,7 +135,7 @@ class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProvider
                                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.phone,
-                                        inputFormatters: [phoneFormatter],
+                                        inputFormatters: [di<AppConfig>().phoneNumberFormatter],
                                         decoration: const InputDecoration(
                                           border: InputBorder.none,
                                           hintText: 'Введите номер',

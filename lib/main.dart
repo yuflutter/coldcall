@@ -82,7 +82,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // Экраны пересоздаются все, а модели по разному. Часть моделей лежит в глобальном DI, а часть создается по месту.
+  // Экраны пересоздаются все, а модели - по разному. Часть моделей лежит в глобальном DI, а часть создается по месту.
   final _screens = [() => CameraDialerScreen(), () => RecorderRecognizerScreen(), () => HistoryScreen(), () => UserSessionScreen()];
   var _currentIndex = 0;
   late var _currentScreen = _screens[_currentIndex]();

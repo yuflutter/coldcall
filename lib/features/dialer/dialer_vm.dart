@@ -1,4 +1,5 @@
 import 'package:coldcall/app_config.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/_all_syncable_entities.dart';
@@ -14,7 +15,7 @@ class DialerVm with SimpleChangeNotifier {
   DialerVm({this.initialPhone, this.deal, required this.closeFromOutside});
 
   late final phoneEditingController = TextEditingController(
-    text: phoneFormatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: initialPhone ?? '')).text,
+    text: di<AppConfig>().phoneNumberFormatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: initialPhone ?? '')).text,
   );
   String get phone => phoneEditingController.text.trim();
 

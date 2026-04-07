@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:coldcall/app_config.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/detected_phone.dart';
+import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
 import 'package:coldcall/features/dialer/phone_detector_service.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,8 @@ import 'package:permission_handler/permission_handler.dart';
 class CameraDialerVm with SimpleChangeNotifier {
   CameraController? cameraController;
 
-  List<DetectedPhone> detectedPhones = [];
-  DetectedPhone? selectedPhone;
+  List<DetectedPhoneNumber> detectedPhones = [];
+  DetectedPhoneNumber? selectedPhone;
   String? frozenFramePath; // Путь к замороженному кадру
   BuildContext? _context; // нужен для получения размера экрана (используется для работы прицела)
 
@@ -70,7 +71,7 @@ class CameraDialerVm with SimpleChangeNotifier {
 
   void _startVideoProcessing() {
     _stopVideoProcessing();
-    _videoProcessingTimer = Timer.periodic(frameProcessingRate, (_) => _processFrame());
+    _videoProcessingTimer = Timer.periodic(di<AppConfig>().frameProcessingRate, (_) => _processFrame());
   }
 
   void _stopVideoProcessing() {
@@ -103,7 +104,7 @@ class CameraDialerVm with SimpleChangeNotifier {
     _isVideoProcessing = false;
   }
 
-  Future<void> _selectPhone(List<DetectedPhone> phones, String framePath) async {
+  Future<void> _selectPhone(List<DetectedPhoneNumber> phones, String framePath) async {
     if (phones.isEmpty) return notify(() => selectedPhone = null);
 
     // Если номер только один - выбираем автоматически
@@ -126,7 +127,7 @@ class CameraDialerVm with SimpleChangeNotifier {
     }
   }
 
-  DetectedPhone? _getPhoneInCrosshair(List<DetectedPhone> phones) {
+  DetectedPhoneNumber? _getPhoneInCrosshair(List<DetectedPhoneNumber> phones) {
     if (cameraController == null || !cameraController!.value.isInitialized || _context?.mounted != true) return null;
 
     final cameraSize = cameraController!.value.previewSize!;
@@ -155,7 +156,7 @@ class CameraDialerVm with SimpleChangeNotifier {
     return null;
   }
 
-  void showDialer({DetectedPhone? phone, String? framePath}) async {
+  void showDialer({DetectedPhoneNumber? phone, String? framePath}) async {
     _stopVideoProcessing();
 
     // Удаляем старый замороженный кадр, если он есть

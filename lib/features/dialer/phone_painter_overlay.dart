@@ -1,9 +1,9 @@
-import 'package:coldcall/entities/detected_phone.dart';
+import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:flutter/material.dart';
 
 class PhonePainterOverlay extends CustomPainter {
-  final List<DetectedPhone> detectedPhones;
-  final DetectedPhone? selectedPhone;
+  final List<DetectedPhoneNumber> detectedPhones;
+  final DetectedPhoneNumber? selectedPhone;
   final Size imageSize;
   final Size screenSize;
 
@@ -33,7 +33,7 @@ class PhonePainterOverlay extends CustomPainter {
 
       // Рисуем текст номера
       final textSpan = TextSpan(
-        text: phone.phoneNumber,
+        text: phone.originNumber,
         style: TextStyle(
           color: isSelected ? Colors.red : Colors.green,
           fontSize: 14,
