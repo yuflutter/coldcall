@@ -15,12 +15,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// TODO: Перенести хранение из файла в локальную СУБД, когда нибудь.
 class HistoryVm with SimpleChangeNotifier {
-  var _deals = <Deal>[];
+  var _deals = SyncableList<Deal>();
   // для интерфейса
-  Iterable<Deal> get deals => _deals.where((e) => !e.deleted);
+  Iterable<Deal> get deals => _deals.items;
   // для синхронизатора
   Iterable<Deal> notSyncedDeals(DateTime? lastSyncTime) =>
-      _deals.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
+      _deals.items.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
@@ -71,9 +71,9 @@ class HistoryVm with SimpleChangeNotifier {
     if (file.existsSync()) {
       final json = await file.readAsString();
       try {
-        notify(() => _deals = (jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
-      } catch (e) {
-        print(e);
+        notify(() => _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList()));
+      } catch (e, s) {
+        Err.add(e, s);
         file.delete();
       }
     }
@@ -97,13 +97,25 @@ class HistoryVm with SimpleChangeNotifier {
     }
   }
 
-  Future<void> updateDeal(Deal deal) async {
-    // список всегда отсортирован по дате последнего изменения
+  void insertDeal(Deal deal) => _deals.insert(deal);
+
+  // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
+  // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
+  void mergeDeal(Deal other) => _deals.merge(
+    other,
+    (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
+  );
+
+  // У нас сущности мутабельные, а этот метод нужен только для переупорядочивания списка
+  // (держим список всегда отсортированным по дате последнего изменения)
+  Future<void> updateDeal(Deal deal, {bool raw = false}) async {
     _deals
       ..remove(deal)
       ..add(deal);
-    notifyListeners();
-    await saveToStorage();
+    if (!raw) {
+      notifyListeners();
+      await saveToStorage();
+    }
   }
 
   Future<void> deleteHistoryRecord(HistoryRecord record) async {

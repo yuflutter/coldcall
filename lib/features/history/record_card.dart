@@ -55,99 +55,104 @@ class _RecordCardState extends State<RecordCard> {
   Widget build(BuildContext context) {
     final isAudioPlaying = (_model.currentPlayingRecordId == _record.id);
 
-    return PopScope(
-      canPop: !_isEditing,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _cancelEditing();
-      },
-      child: Card(
-        margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
-        color: Colors.white12,
-        child: InkWell(
-          onTap: (_record.textTranscription != null)
-              ? () => _showDetails(_record)
-              : (_record.phoneNumber != null)
-              ? () => _call(_record)
-              : null,
-          onLongPress: () => _showDeleteRecordDialog(context, _record),
-          child: Padding(
-            padding: .fromLTRB(10, 0, 0, 5),
-            child: Column(
-              crossAxisAlignment: .stretch,
-              children: [
-                Row(
+    return ListenableBuilder(
+      listenable: _model,
+      builder: (context, _) {
+        return PopScope(
+          canPop: !_isEditing,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _cancelEditing();
+          },
+          child: Card(
+            margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
+            color: Colors.white12,
+            child: InkWell(
+              onTap: (_record.textTranscription != null)
+                  ? () => _showDetails(_record)
+                  : (_record.phoneNumber != null)
+                  ? () => _call(_record)
+                  : null,
+              onLongPress: () => _showDeleteRecordDialog(context, _record),
+              child: Padding(
+                padding: .fromLTRB(10, 0, 0, 5),
+                child: Column(
+                  crossAxisAlignment: .stretch,
                   children: [
                     Row(
-                      mainAxisSize: .min,
                       children: [
-                        if (_record.phoneNumber != null) Icon(Icons.call, size: 14),
-                        if (_record.audioFileName != null) Icon(Icons.mic, size: 17),
-                        Gap(8),
+                        Row(
+                          mainAxisSize: .min,
+                          children: [
+                            if (_record.phoneNumber != null) Icon(Icons.call, size: 14),
+                            if (_record.audioFileName != null) Icon(Icons.mic, size: 17),
+                            Gap(8),
+                          ],
+                        ),
+                        _buildTimeDate(_record.startTime),
+                        Spacer(),
+                        Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                        Gap(10),
+
+                        if (_record.audioFileName != null) ...[
+                          SizedBox(
+                            height: 40,
+                            child: IconButton(
+                              padding: .zero,
+                              icon: (isAudioPlaying)
+                                  ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
+                                  : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
+                              onPressed: () => _model.startStopAudio(context, _record),
+                            ),
+                          ),
+                        ],
+
+                        if (_record.phoneNumber != null)
+                          if (!_isEditing)
+                            SizedBox(
+                              height: 40,
+                              child: PopupMenuButton(
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(onTap: () => _startEditing(), child: Text('Примечание к звонку')),
+                                  PopupMenuItem(onTap: null, child: Text('Примечание к номеру'), enabled: false),
+                                ],
+                              ),
+                            )
+                          else
+                            IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
                       ],
                     ),
-                    _buildTimeDate(_record.startTime),
-                    Spacer(),
-                    Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                    Gap(10),
 
-                    if (_record.audioFileName != null) ...[
-                      SizedBox(
-                        height: 40,
-                        child: IconButton(
-                          padding: .zero,
-                          icon: (isAudioPlaying)
-                              ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
-                              : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
-                          onPressed: () => _model.startStopAudio(context, _record),
-                        ),
+                    if (isAudioPlaying && !_isDetailsExpanded) AudioPlayerControl(),
+
+                    if (_record.phoneNumber != null) _buildPhoneNumber(_record),
+
+                    if (_record.note != null && !_isEditing)
+                      Padding(
+                        padding: .fromLTRB(0, 5, 5, 0),
+                        child: Text(_record.note!, style: TextStyle(fontSize: 15)),
                       ),
-                    ],
+                    if (_isEditing)
+                      TextField(
+                        controller: _noteEditController,
+                        autofocus: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: _saveEditing,
+                      ),
 
-                    if (_record.phoneNumber != null)
-                      if (!_isEditing)
-                        SizedBox(
-                          height: 40,
-                          child: PopupMenuButton(
-                            itemBuilder: (context) => [
-                              PopupMenuItem(onTap: () => _startEditing(), child: Text('Примечание к звонку')),
-                              PopupMenuItem(onTap: null, child: Text('Примечание к номеру'), enabled: false),
-                            ],
-                          ),
-                        )
-                      else
-                        IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
+                    if (_record.textTranscription != null && _record.phoneNumber != null) Gap(8),
+
+                    if (_record.textTranscription != null)
+                      Padding(
+                        padding: .fromLTRB(0, 0, 5, 0),
+                        child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
+                      ),
                   ],
                 ),
-
-                if (isAudioPlaying && !_isDetailsExpanded) AudioPlayerControl(),
-
-                if (_record.phoneNumber != null) _buildPhoneNumber(_record),
-
-                if (_record.note != null && !_isEditing)
-                  Padding(
-                    padding: .fromLTRB(0, 5, 5, 0),
-                    child: Text(_record.note!, style: TextStyle(fontSize: 15)),
-                  ),
-                if (_isEditing)
-                  TextField(
-                    controller: _noteEditController,
-                    autofocus: true,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: _saveEditing,
-                  ),
-
-                if (_record.textTranscription != null && _record.phoneNumber != null) Gap(8),
-
-                if (_record.textTranscription != null)
-                  Padding(
-                    padding: .fromLTRB(0, 0, 5, 0),
-                    child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

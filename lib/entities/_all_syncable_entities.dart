@@ -8,6 +8,10 @@ import 'package:path_provider/path_provider.dart';
 
 part '_all_syncable_entities.mapper.dart';
 
+// Внимание! после кодогена в файле маппера будет ошибка, заменить ошибочную строку на эту:
+// get _records => (($value._records as SyncableList<HistoryRecord>).copyWith
+//     .$chain((v) => call(records: v))) as SyncableListCopyWith<$R, SyncableList<HistoryRecord>, SyncableList<HistoryRecord>, HistoryRecord>;
+
 // Принял спорное архитектурное решение, что синхронизируемые объекты будут мутабельными.
 // Не хотелось заморачиваться с заменой ссылок в полносвязном дереве. Хотя может быть с copyWith() было бы короче.
 // Теперь почти вся логика merge инкапсулирована внутри сущностей.
@@ -28,9 +32,18 @@ abstract class Syncable {
       _lastModified = lastModified ?? DateTime.now();
 
   bool get deleted => _deleted;
-  void markDeleted() => _update(() => _deleted = true);
+  void markDeleted({bool raw = false}) {
+    if (!raw) {
+      _update(() => _deleted = true);
+    } else {
+      _deleted = true;
+    }
+  }
 
   DateTime get lastModified => _lastModified;
+
+  bool isOlder(Syncable other) => lastModified.isBefore(other.lastModified);
+  bool isNewer(Syncable other) => lastModified.isAfter(other.lastModified);
 
   /// использовать во всех потомках при ручном обновлении полей
   void _update([VoidCallback? update]) {
@@ -41,8 +54,58 @@ abstract class Syncable {
   /// Используется стратегия Last Write Wins для всех полей
   @mustCallSuper
   void mergeFrom(Syncable remote) {
-    if (remote.lastModified.isAfter(lastModified)) {
-      _deleted = remote.deleted;
+    _deleted = remote.deleted;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+
+@MappableClass()
+class SyncableList<T extends Syncable> with SyncableListMappable {
+  final List<T> _items;
+
+  SyncableList([final List<T>? items]) : _items = items ?? [];
+
+  Iterable<T> get items => _items.where((e) => !e.deleted); // возвращаем итератор, что не так надежно, но производительно
+
+  void add(T item) => _items.add(item);
+  void remove(T item) => _items.remove(item);
+
+  Future<void> insert(T item) async {
+    for (var i = _items.length - 1; i >= 0; i--) {
+      final it = _items[i];
+      if (it.isOlder(item)) {
+        _items.insert(i + 1, item);
+        return;
+      }
+      _items.insert(0, item);
+    }
+  }
+
+  void merge(T other, bool Function(T item1, T intem2) softMergeCondition) {
+    // ищем запись по ID
+    var it = _items.firstWhereOrNull((e) => e.id == other.id);
+
+    if (it == null) {
+      // Ищем похожую запись по мягкому условию, после чего объединяем две в одну
+      it = _items.firstWhereOrNull((e) => softMergeCondition(e, other));
+
+      // добавляем новую запись
+      if (it == null) {
+        _items.add(other);
+        return;
+      }
+    }
+
+    // обновляем поля
+    if (it != null) {
+      if (it.isNewer(other)) {
+        it.mergeFrom(other);
+      } else {
+        other.mergeFrom(it);
+        insert(other);
+        it.markDeleted(raw: true);
+      }
     }
   }
 }
@@ -52,12 +115,18 @@ abstract class Syncable {
 @MappableClass()
 class Deal extends Syncable with DealMappable {
   String _title;
-  final List<HistoryRecord> _records;
+  final SyncableList<HistoryRecord> _records;
 
-  Deal({super.id, super.created, required final String title, final List<HistoryRecord>? records, super.deleted, super.lastModified})
-    : _title = title,
-      _records = records ?? [] {
-    for (var r in _records) {
+  Deal({
+    super.id,
+    super.created,
+    required final String title,
+    final SyncableList<HistoryRecord>? records,
+    super.deleted,
+    super.lastModified,
+  }) : _title = title,
+       _records = records ?? SyncableList<HistoryRecord>() {
+    for (var r in _records.items) {
       r.deal = this; // восстанавливаем ссылку, обрубленную сериализатором
     }
   }
@@ -65,9 +134,19 @@ class Deal extends Syncable with DealMappable {
   String get title => _title;
   void updateTitle(String title) => _update(() => _title = title);
 
-  Iterable<HistoryRecord> get records => _records.where((e) => !e.deleted); // возвращаем итератор, что не так надежно, но производительно
-  void addRecord(HistoryRecord record) => _update(() => _records.add(record));
-  void removeRecord(HistoryRecord record) => _update(() => _records.remove(record));
+  Iterable<HistoryRecord> get records =>
+      _records.items.where((e) => !e.deleted); // возвращаем итератор, что не так надежно, но производительно
+
+  void addRecord(HistoryRecord record, {bool raw = false}) {
+    if (!raw) {
+      _update(() => _records.add(record));
+    } else {
+      _records.add(record);
+    }
+  }
+
+  void insertRecord(HistoryRecord record) => _records.insert(record);
+  // void removeRecord(HistoryRecord record) => _update(() => _records.remove(record));
 
   bool get hasCalls => records.any((r) => r.phoneNumber != null);
   bool get hasAudios => records.any((r) => r.audioFileName != null);
@@ -77,39 +156,10 @@ class Deal extends Syncable with DealMappable {
   void mergeFrom(covariant Deal remote) {
     super.mergeFrom(remote);
 
-    if (remote.lastModified.isAfter(lastModified)) {
-      _title = remote.title;
-    }
+    _title = remote.title;
 
     for (final remoteRecord in remote.records) {
-      // ищем запись по ID
-      var localRecord = records.firstWhereOrNull((local) => local.id == remoteRecord.id);
-
-      // обновляем поля
-      if (localRecord != null) {
-        localRecord.mergeFrom(remoteRecord);
-        continue;
-      }
-
-      // Ищем запись с приблизительно совпадающими интервалами
-      localRecord = records.firstWhereOrNull((e) => e.isIntervalsOverlapped(remoteRecord));
-
-      // объединяем две записи в одну
-      if (localRecord != null) {
-        if (localRecord.lastModified.isAfter(remoteRecord.lastModified)) {
-          localRecord.mergeFrom(remoteRecord);
-        } else {
-          remoteRecord.mergeFrom(localRecord);
-          _records.add(remoteRecord..deal = this);
-          localRecord.markDeleted();
-        }
-        continue;
-      }
-
-      // добавляем новую запись
-      if (localRecord == null) {
-        _records.add(remoteRecord);
-      }
+      _records.merge(remoteRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
   }
 }

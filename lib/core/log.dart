@@ -14,13 +14,13 @@ class Log {
     on?.call(error.toString());
   }
 
-  void inf(Object i) {
+  void inf(dynamic i) {
     final m = i.toString();
     dev.log(m, name: name);
     on?.call(m);
   }
 
-  void war(Object i) {
+  void war(dynamic i) {
     final m = i.toString();
     dev.log(m, name: name, level: 1);
     on?.call(m);

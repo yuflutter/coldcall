@@ -92,7 +92,7 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                                 .qrScaning => SafeArea(
                                   child: Stack(
                                     children: [
-                                      MobileScanner(onDetect: (res) => _model.connectAsClient(barcodeCapture: res)),
+                                      MobileScanner(onDetect: (res) => _model.connectAsClient(clientUrl: res.barcodes[0].rawValue)),
                                       Positioned(
                                         bottom: MediaQuery.of(context).size.height / 10,
                                         left: 0,
@@ -115,7 +115,7 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                                       Padding(
                                         padding: .fromLTRB(20, 0, 20, 0),
                                         child: Text(
-                                          'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети, либо на одном из них включен VPN.\n\n',
+                                          'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети (либо один к другому), либо на одном из них включен VPN.\n\n',
                                         ),
                                       ),
                                       // TextButton(onPressed: () => Navigator.pop(context), child: Text('Закрыть')),

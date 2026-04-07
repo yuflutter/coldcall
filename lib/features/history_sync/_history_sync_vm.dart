@@ -9,8 +9,6 @@ import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/_all_syncable_entities.dart';
 import 'package:coldcall/entities/sync_status.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
-import 'package:collection/collection.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -21,7 +19,7 @@ enum SyncStage { roleSelecting, qrScaning, netConecting, lastSyncTimeSwap, jsonS
 class HistorySyncVm with SimpleChangeNotifier {
   static const _qrUrlPrefix = 'coldcall:';
 
-  var status = di<HistoryVm>().lastSyncStatus;
+  late SyncStatus status;
   var stage = SyncStage.roleSelecting;
 
   Future<void>? startFuture;
@@ -53,9 +51,13 @@ class HistorySyncVm with SimpleChangeNotifier {
   Future<void> init() async {
     _localFilePath = (await getApplicationDocumentsDirectory()).path;
 
-    final serverIp = await NetworkInfo().getWifiIP();
-    if (serverIp == null) throw 'Не могу определить свой IP';
-    notify(() => status = status.copyWith(serverIp: serverIp));
+    status = di<HistoryVm>().lastSyncStatus;
+    if (status.role != .notAssigned) {
+      notify(() {
+        startFuture = (status.role == .server) ? startAsServer() : Future.value(null);
+        stage = .netConecting;
+      });
+    }
 
     // TODO: Фоновая синхронизация сейчас не работает, продумать куда выводить ошибки и лог
     // switch (status.role) {
@@ -67,9 +69,15 @@ class HistorySyncVm with SimpleChangeNotifier {
     // }
   }
 
-  void setRole(final SyncRole role) {
+  void setRole(final SyncRole role) async {
+    String? serverIp;
+    if (role == .server) {
+      serverIp = await NetworkInfo().getWifiIP();
+      _log.war(serverIp);
+      if (serverIp == null) throw 'Не могу определить свой IP';
+    }
     notify(() {
-      status = status.copyWith(role: role);
+      status = status.copyWith(role: role, serverIp: serverIp);
       startFuture = (role == .server) ? startAsServer() : Future.value(null);
       stage = .qrScaning;
     });
@@ -84,10 +92,9 @@ class HistorySyncVm with SimpleChangeNotifier {
       _log.inf('Listening on $serverIp:${di<AppConfig>().historySyncHttpPort} ...');
 
       _server!.listen((request) async {
+        notify(() => stage = .netConecting);
         try {
           if (WebSocketTransformer.isUpgradeRequest(request)) {
-            notify(() => stage = .netConecting);
-
             _socket = await WebSocketTransformer.upgrade(request);
             _log.inf('Connect received from: ${request.connectionInfo?.remoteAddress.address}');
 
@@ -113,20 +120,16 @@ class HistorySyncVm with SimpleChangeNotifier {
     }
   }
 
-  Future<void> connectAsClient({BarcodeCapture? barcodeCapture}) async {
-    try {
-      String url;
-      if (barcodeCapture != null) {
-        url = barcodeCapture.barcodes[0].rawValue!;
-        if (!url.startsWith(_qrUrlPrefix)) return;
+  Future<void> connectAsClient({required final String? clientUrl}) async {
+    if (clientUrl == null || !clientUrl.startsWith(_qrUrlPrefix)) return;
 
-        url = url.replaceFirst(_qrUrlPrefix, '');
-        notify(() => status = status.copyWith(clientUrl: url));
-        //
-      } else {
-        url = status.clientUrl!;
-      }
-      notify(() => stage = .netConecting);
+    notify(() {
+      status = status.copyWith(clientUrl: clientUrl);
+      stage = .netConecting;
+    });
+
+    try {
+      final url = clientUrl.replaceFirst(_qrUrlPrefix, '');
 
       _channel = WebSocketChannel.connect(Uri.parse(url));
       await _channel!.ready;
@@ -232,38 +235,7 @@ class HistorySyncVm with SimpleChangeNotifier {
         }
       }
 
-      // ищем дело по ID
-      var localDeal = localDeals.firstWhereOrNull((local) => local.id == remoteDeal.id);
-
-      // обновляем поля
-      if (localDeal != null) {
-        localDeal.mergeFrom(remoteDeal);
-        continue;
-      }
-
-      // Ищем дело с приблизительно совпадающими интервалами первой записи
-      if (remoteDeal.records.isNotEmpty) {
-        localDeal = localDeals.firstWhereOrNull(
-          (e) => e.records.isNotEmpty && e.records.first.isIntervalsOverlapped(remoteDeal.records.first),
-        );
-
-        // объединяем два дела в одно
-        if (localDeal != null) {
-          if (localDeal.lastModified.isAfter(remoteDeal.lastModified)) {
-            localDeal.mergeFrom(remoteDeal);
-          } else {
-            remoteDeal.mergeFrom(localDeal);
-            history.addDeal(remoteDeal, raw: true);
-            localDeal.markDeleted();
-          }
-          continue;
-        }
-      }
-
-      // добавляем новую запись
-      if (localDeal == null) {
-        history.addDeal(remoteDeal, raw: true);
-      }
+      history.mergeDeal(remoteDeal);
     }
     await history.saveToStorage();
     history.notifyListeners();
