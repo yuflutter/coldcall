@@ -121,7 +121,10 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   // избегаем рекурсии при сериализации, к сожалению при любом copyWith поле тоже пропадает,
   // но мы copyWith нигде не используем, а просто пишем в поля через методы updateXXX.
   @MappableField(hook: NullMappableFieldHook())
-  Deal? deal; // не делаем final, так как при создании HistoryRecord с пустым Deal - объект Deal создается на основании полей HistoryRecord
+  // не делаем final по двум причинам:
+  // 1) при создании HistoryRecord с пустым Deal - объект Deal создается на основании полей HistoryRecord
+  // 2) при слиянии двух записей в одну (синхронизация по интервалам) - поле deal может перезаписываться
+  Deal? deal;
   final DateTime startTime;
   final Duration duration;
   String? _phoneNumber; // обновляется только при синхронизации-слиянии
@@ -150,6 +153,7 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   }
 
   String? get phoneNumber => _phoneNumber;
+
   String? get audioFileName => _audioFileName;
   Future<String>? audioFilePath() async {
     final path = (await getApplicationDocumentsDirectory()).path;
@@ -157,7 +161,6 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   }
 
   String? get textTranscription => _textTranscription;
-  void updateTextTranscription(String textTranscription) => _update(() => _textTranscription = textTranscription);
 
   String? get note => _note;
   void updateNote(String note) => _update(() => _note = note);

@@ -14,9 +14,7 @@ class ForceLocalDateTimeMapper extends DateTimeMapper {
   const ForceLocalDateTimeMapper();
   @override
   DateTime decode(dynamic value) {
-    // Сначала используем стандартную логику парсинга строки/числа
     DateTime dt = super.decode(value);
-    // Принудительно переводим в локальное время устройства
     return dt.toLocal();
   }
 }
