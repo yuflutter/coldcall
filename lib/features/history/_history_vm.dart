@@ -86,6 +86,7 @@ class HistoryVm with SimpleChangeNotifier {
       }
     } catch (e, s) {
       _log.err(e, s);
+      rethrow;
     }
   }
 
