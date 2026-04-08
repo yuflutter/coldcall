@@ -28,14 +28,6 @@ class HistoryVm with SimpleChangeNotifier {
   SyncStatus get lastSyncStatus => _lastSyncStatus;
   static const _lastSyncStatusStorageKey = 'lastSyncStatus';
 
-  /// Вызывается сервисом синхронизации после успешного завершения обмена.
-  Future<void> updateLastSyncStatus(SyncStatus status) async {
-    _lastSyncStatus = status;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
-  }
-
   // раскрытие карточки Deal
   Deal? _currentExpandedDeal;
   int? get currentExpandedDealId => _currentExpandedDeal?.id;
@@ -62,23 +54,23 @@ class HistoryVm with SimpleChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
 
       try {
-        notify(() => _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!));
+        _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
       } catch (e, s) {
         _log.err(e, s);
         _lastSyncStatus = SyncStatus();
       }
+      notifyListeners();
 
       final dir = await getApplicationDocumentsDirectory();
       _storageFilePath = '${dir.path}/history_deals.json';
 
       final file = File(_storageFilePath);
       if (file.existsSync()) {
-        final json = await file.readAsString();
         try {
-          notify(() {
-            _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
-            _currentExpandedDeal = null;
-          });
+          final json = await file.readAsString();
+          _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
+          _currentExpandedDeal = null;
+          notifyListeners();
         } catch (e, s) {
           _log.err(e, s);
           file.delete();
@@ -87,6 +79,18 @@ class HistoryVm with SimpleChangeNotifier {
     } catch (e, s) {
       _log.err(e, s);
       rethrow;
+    }
+  }
+
+  /// Вызывается сервисом синхронизации после успешного завершения обмена.
+  Future<void> updateLastSyncStatus(SyncStatus status) async {
+    try {
+      _lastSyncStatus = status;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
+    } catch (e, s) {
+      Err.add(e, s);
     }
   }
 
