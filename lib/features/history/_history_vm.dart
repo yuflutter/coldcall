@@ -69,7 +69,7 @@ class HistoryVm with SimpleChangeNotifier {
         try {
           final json = await file.readAsString();
           _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
-          Log.deb(_deals.items.length);
+          Log.deb(_deals.length);
           _currentExpandedDeal = null;
           notifyListeners();
         } catch (e, s) {

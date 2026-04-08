@@ -58,7 +58,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             reverse: true,
                             itemBuilder: (context, index) {
                               final deal = deals[deals.length - 1 - index];
-                              return DealCard(deal: deal);
+                              return DealCard(deal: deal, key: Key(deal.id.toString()));
                             },
                           ),
                         ),

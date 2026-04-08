@@ -64,17 +64,21 @@ abstract class Syncable {
 
 // ---------------------------------------------------------------------------------------------
 
-// Класс сделан с единственной целью - чтобы не дублировать алгоритмы insert и merge
+// Упорядоченный список синхронизируемых объектов. Класс сделан с двумя целями:
+// 1) запретить простое добавление в конец
+// 2) не дублировать алгоритмы insert и merge
 @MappableClass()
 class SyncableList<T extends Syncable> with SyncableListMappable {
   final List<T> _items;
 
   SyncableList([final List<T>? items]) : _items = items ?? [];
 
-  Iterable<T> get items => _items.where((e) => !e.deleted); // возвращаем итератор, что не так надежно, но производительно
+  // возвращаем итератор, что не так надежно как иммутабельный лист, но более производительно
+  Iterable<T> get items => _items.where((e) => !e.deleted);
+  int get length => _items.length;
 
-  void add(T item) => _items.add(item);
-  void remove(T item) => _items.remove(item);
+  // поскольку список упорядоченный - запрещаем простое добавление, только вставка в нужное место по дате
+  // void add(T item) => _items.add(item);
 
   Future<void> insert(T item) async {
     for (var i = _items.length - 1; i >= 0; i--) {
@@ -87,6 +91,8 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     _items.insert(0, item);
   }
 
+  void remove(T item) => _items.remove(item);
+
   void merge(T other, bool Function(T item1, T intem2) softMergeCondition) {
     // ищем запись по ID
     var it = _items.firstWhereOrNull((e) => e.id == other.id);
@@ -97,12 +103,12 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 
       // добавляем новую запись
       if (it == null) {
-        add(other);
+        insert(other);
         return;
       }
     }
 
-    // обновляем поля
+    // обновляем поля в существующей записи, и перепозиционируем ее в упорядоченном списке
     if (it != null) {
       if (it.isNewer(other)) {
         it.mergeFrom(other);
@@ -133,19 +139,21 @@ class Deal extends Syncable with DealMappable {
     super.lastModified,
   }) : _title = title,
        _records = records ?? SyncableList<HistoryRecord>() {
+    // восстанавливаем ссылку, обрубленную сериализатором
+    //TODO: здесь неявное поведение, подумать как улучшить
     for (var r in _records.items) {
-      r.deal = this; // восстанавливаем ссылку, обрубленную сериализатором TODO: здесь неявное поведение, подумать как улучшить
+      r.deal = this;
     }
   }
 
   String get title => _title;
   void updateTitle(String title) => _update(() => _title = title);
 
-  Iterable<HistoryRecord> get records => _records.items; // возвращаем итератор, что не так надежно, но производительно
+  Iterable<HistoryRecord> get records => _records.items;
 
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
-    _update(() => _records.add(record), raw: raw);
+    _update(() => _records.insert(record), raw: raw);
   }
 
   // void insertRecord(HistoryRecord record) {
@@ -164,12 +172,7 @@ class Deal extends Syncable with DealMappable {
     _title = other.title;
 
     for (final otherRecord in other.records) {
-      _records.merge(
-        otherRecord,
-        (r1, r2) =>
-            r1.isIntervalsOverlapped(r2) &&
-            ((r1.phoneNumber == null && r2.phoneNumber != null) || (r1.audioFileName == null && r2.audioFileName != null)),
-      );
+      _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
   }
 }
@@ -280,7 +283,7 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   /// которые создаются на разных устройствах, но на самом деле относятся к одному событию.
   bool isIntervalsOverlapped(HistoryRecord other) {
     // сливаем только параллельную запись со звонком, но не два звонка и не две записи
-    if ((phoneNumber == null && other._audioFileName != null) || ((phoneNumber != null && other._audioFileName == null))) {
+    if (((phoneNumber == null) == (other.phoneNumber == null)) || ((audioFileName == null) == (other.audioFileName == null))) {
       return false;
     }
 
