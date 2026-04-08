@@ -106,10 +106,12 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     if (it != null) {
       if (it.isNewer(other)) {
         it.mergeFrom(other);
+        remove(it);
+        insert(it);
       } else {
         other.mergeFrom(it);
+        remove(it);
         insert(other);
-        it.markDeleted(raw: true);
       }
     }
   }

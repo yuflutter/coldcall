@@ -64,8 +64,8 @@ Future<void> initApp() async {
   // файлы выбранной нейросети в корень папки /assets/
   // Только файлы, лежащие в корне, включается в итоговую сборку!
 
-  // DI.put(RecognizerServiceVosk());
-  DI.put(RecognizerServiceSherpaSync());
+  DI.put(RecognizerServiceVosk());
+  // DI.put(RecognizerServiceSherpaSync());
   // DI.put(RecognizerServiceSherpaIsolate());
 
   // Вьюмодель храним глобально, чтобы запись продолжалась при навигации по экранам

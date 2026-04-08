@@ -84,14 +84,16 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                                     Spacer(),
                                   ],
                                 ),
-                                .netConecting => Column(
-                                  mainAxisSize: .min,
-                                  crossAxisAlignment: .center,
-                                  children: [
-                                    Text('Ожидаю подключения ...'),
-                                    Gap(30),
-                                    _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
-                                  ],
+                                .netConecting => Center(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    crossAxisAlignment: .center,
+                                    children: [
+                                      Text('Ожидаю подключения ...'),
+                                      Gap(20),
+                                      _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
+                                    ],
+                                  ),
                                 ),
                                 _ => _buildSyncStatus(context),
                               },
@@ -127,7 +129,7 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                                           'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети (либо один к другому), либо на одном из них включен VPN.\n\n',
                                         ),
                                       ),
-                                      Gap(30),
+                                      Gap(20),
                                       _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
                                       // TextButton(onPressed: () => Navigator.pop(context), child: Text('Закрыть')),
                                     ],

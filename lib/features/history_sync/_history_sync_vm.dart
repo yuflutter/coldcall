@@ -65,7 +65,7 @@ class HistorySyncVm with SimpleChangeNotifier {
 
   void clearConnectionInfo() {
     notify(() {
-      status = SyncStatus();
+      status = status.copyWith(role: .notAssigned, serverIp: null, clientUrl: null);
       stage = SyncStage.roleSelecting;
     });
   }

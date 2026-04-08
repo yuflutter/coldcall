@@ -63,7 +63,8 @@ class HistoryVm with SimpleChangeNotifier {
 
       try {
         _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
-      } catch (_) {
+      } catch (e, s) {
+        _log.err(e, s);
         _lastSyncStatus = SyncStatus();
       }
 
