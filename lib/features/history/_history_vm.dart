@@ -54,7 +54,7 @@ class HistoryVm with SimpleChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
 
       try {
-        _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
+        _lastSyncStatus = SyncStatusMapper.fromJson(jsonDecode(prefs.getString(_lastSyncStatusStorageKey)!));
       } catch (e, s) {
         _log.err(e, s);
         _lastSyncStatus = SyncStatus();
@@ -69,6 +69,7 @@ class HistoryVm with SimpleChangeNotifier {
         try {
           final json = await file.readAsString();
           _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
+          Log.deb(_deals.items.length);
           _currentExpandedDeal = null;
           notifyListeners();
         } catch (e, s) {

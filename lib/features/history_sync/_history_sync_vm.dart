@@ -139,9 +139,16 @@ class HistorySyncVm with SimpleChangeNotifier {
       _wsSender = _channel!.sink.add;
       _sendLastSyncTime();
 
-      await for (final data in _channel!.stream) {
-        await _handleIncoming(data);
-      }
+      // Завершаем connectAsClient, так как она используется в FutureBuilder
+      () async {
+        try {
+          await for (final data in _channel!.stream) {
+            await _handleIncoming(data);
+          }
+        } catch (e, s) {
+          Err.add(e, s);
+        }
+      }();
       //
     } catch (e, s) {
       Err.add(e, s);
