@@ -30,7 +30,7 @@ class PhoneDetectorService {
 
       return detectedPhones;
     } catch (e) {
-      Log('$PhoneDetectorService').err('Error detecting phones: $e', null);
+      Log('$runtimeType').err('Error detecting phones: $e', null);
       return [];
     }
   }

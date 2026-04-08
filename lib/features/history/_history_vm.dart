@@ -54,29 +54,34 @@ class HistoryVm with SimpleChangeNotifier {
   DialerVm? dialerOverlayModel;
   bool get isDialerShown => (dialerOverlayModel != null);
 
-  late final String _storageFilePath;
+  late String _storageFilePath;
+  late final _log = Log('$runtimeType');
 
   Future<void> initFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-
     try {
-      _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
-    } catch (_) {
-      _lastSyncStatus = SyncStatus();
-    }
+      final prefs = await SharedPreferences.getInstance();
 
-    final dir = await getApplicationDocumentsDirectory();
-    _storageFilePath = '${dir.path}/history_deals.json';
-
-    final file = File(_storageFilePath);
-    if (file.existsSync()) {
-      final json = await file.readAsString();
       try {
-        notify(() => _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList()));
-      } catch (e, s) {
-        Log('$HistoryRecord').err(e, s);
-        file.delete();
+        _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
+      } catch (_) {
+        _lastSyncStatus = SyncStatus();
       }
+
+      final dir = await getApplicationDocumentsDirectory();
+      _storageFilePath = '${dir.path}/history_deals.json';
+
+      final file = File(_storageFilePath);
+      if (file.existsSync()) {
+        final json = await file.readAsString();
+        try {
+          notify(() => _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList()));
+        } catch (e, s) {
+          _log.err(e, s);
+          file.delete();
+        }
+      }
+    } catch (e, s) {
+      _log.err(e, s);
     }
   }
 

@@ -162,7 +162,12 @@ class Deal extends Syncable with DealMappable {
     _title = other.title;
 
     for (final otherRecord in other.records) {
-      _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
+      _records.merge(
+        otherRecord,
+        (r1, r2) =>
+            r1.isIntervalsOverlapped(r2) &&
+            ((r1.phoneNumber == null && r2.phoneNumber != null) || (r1.audioFileName == null && r2.audioFileName != null)),
+      );
     }
   }
 }

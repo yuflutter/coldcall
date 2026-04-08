@@ -51,13 +51,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 : SafeArea(
                     child: Stack(
                       children: [
-                        ListView.builder(
-                          itemCount: deals.length,
-                          reverse: true,
-                          itemBuilder: (context, index) {
-                            final deal = deals[deals.length - 1 - index];
-                            return DealCard(deal: deal);
-                          },
+                        RefreshIndicator(
+                          onRefresh: _model.initFromStorage,
+                          child: ListView.builder(
+                            itemCount: deals.length,
+                            reverse: true,
+                            itemBuilder: (context, index) {
+                              final deal = deals[deals.length - 1 - index];
+                              return DealCard(deal: deal);
+                            },
+                          ),
                         ),
                         // // Панель набора номера с полноэкранным оверлеем
                         if (_model.isDialerShown) DialerOverlay(model: _model.dialerOverlayModel!),

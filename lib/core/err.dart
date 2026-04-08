@@ -23,7 +23,7 @@ class UserError {
 
 /// Глобальный менеджер ошибок. Пушит ошибки на главный экран.
 class Err {
-  final _log = Log('$Err');
+  late final _log = Log('$runtimeType');
   final _errController = StreamController<UserError>();
   late final errStream = _errController.stream;
 

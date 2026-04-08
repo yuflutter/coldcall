@@ -26,7 +26,7 @@ class HistorySyncVm with SimpleChangeNotifier {
 
   final _userLog = StringBuffer();
   String get userLog => _userLog.toString();
-  late final _log = Log('$HistorySyncVm', on: (m) => notify(() => _userLog.writeln(m)));
+  late final _log = Log('$runtimeType', on: (m) => notify(() => _userLog.writeln(m)));
 
   String get qrServerUrl => '${_qrUrlPrefix}ws://${status.serverIp}:${di<AppConfig>().historySyncHttpPort}';
   HttpServer? _server;
@@ -52,21 +52,22 @@ class HistorySyncVm with SimpleChangeNotifier {
     _localFilePath = (await getApplicationDocumentsDirectory()).path;
 
     status = di<HistoryVm>().lastSyncStatus;
+
+    // TODO: Фоновая синхронизация сейчас не работает, продумать куда выводить ошибки и лог
+
     if (status.role != .notAssigned) {
       notify(() {
         startFuture = (status.role == .server) ? startAsServer() : connectAsClient(clientUrl: status.clientUrl);
         stage = .netConecting;
       });
     }
+  }
 
-    // TODO: Фоновая синхронизация сейчас не работает, продумать куда выводить ошибки и лог
-    // switch (status.role) {
-    //   case .server:
-    //     startAsServer();
-    //   case .client:
-    //     connectAsClient();
-    //   default:
-    // }
+  void clearConnectionInfo() {
+    notify(() {
+      status = SyncStatus();
+      stage = SyncStage.roleSelecting;
+    });
   }
 
   void setRole(final SyncRole role) async {
@@ -244,7 +245,9 @@ class HistorySyncVm with SimpleChangeNotifier {
 
   Future<void> _done() async {
     try {
-      await di<HistoryVm>().updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
+      final history = di<HistoryVm>();
+      await history.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
+      await history.saveToStorage();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);
