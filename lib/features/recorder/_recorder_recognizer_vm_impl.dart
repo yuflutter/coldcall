@@ -118,7 +118,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
       await _recognizer.flushSession();
       notifyListeners();
 
-      final record = HistoryRecord(
+      final record = HistoryRecord.manually(
         deal: _session!.deal,
         startTime: result.startTime,
         duration: result.duration,
@@ -126,7 +126,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
         textTranscription: textTranscription.substring(0, min(textTranscription.length, 500)),
       );
 
-      await record.saveToStorage();
+      await di<HistoryVm>().updateDeal(record.deal!);
 
       if (_session?.deal != null) di<HistoryVm>().expandDealCard(_session!.deal!);
 

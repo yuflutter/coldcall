@@ -3,6 +3,7 @@ import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 
@@ -44,14 +45,25 @@ class DialerVm with SimpleChangeNotifier {
   }
 
   Future<void> closeDialer(bool isCalling) async {
-    if (isCalling) saveCallInHistory();
-    await animationController?.reverse();
-    closeFromOutside(isCalling);
+    try {
+      if (isCalling) saveCallInHistory();
+      await animationController?.reverse();
+      closeFromOutside(isCalling);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
   }
 
   Future<void> saveCallInHistory() async {
     if (!isCalling) return;
-    final record = HistoryRecord(phoneNumber: phone, startTime: startTime!, duration: DateTime.now().difference(startTime!), deal: deal);
-    await record.saveToStorage();
+
+    final record = HistoryRecord.manually(
+      deal: deal,
+      startTime: startTime!,
+      duration: DateTime.now().difference(startTime!),
+      phoneNumber: phone,
+    );
+
+    await di<HistoryVm>().updateDeal(record.deal!);
   }
 }

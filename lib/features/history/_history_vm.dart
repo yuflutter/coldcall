@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:coldcall/core/err.dart';
+import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/_all_syncable_entities.dart';
@@ -73,7 +74,7 @@ class HistoryVm with SimpleChangeNotifier {
       try {
         notify(() => _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList()));
       } catch (e, s) {
-        Err.add(e, s);
+        Log('$HistoryRecord').err(e, s);
         file.delete();
       }
     }
@@ -111,7 +112,7 @@ class HistoryVm with SimpleChangeNotifier {
   Future<void> updateDeal(Deal deal, {bool raw = false}) async {
     _deals
       ..remove(deal)
-      ..add(deal);
+      ..insert(deal);
     if (!raw) {
       notifyListeners();
       await saveToStorage();

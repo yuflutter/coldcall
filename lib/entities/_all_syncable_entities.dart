@@ -1,9 +1,9 @@
 import 'package:coldcall/core/dart_mappable_settings.dart';
-import 'package:coldcall/core/di.dart';
-import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/core/log.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 
 part '_all_syncable_entities.mapper.dart';
@@ -12,9 +12,11 @@ part '_all_syncable_entities.mapper.dart';
 // get _records => (($value._records as SyncableList<HistoryRecord>).copyWith
 //     .$chain((v) => call(records: v))) as SyncableListCopyWith<$R, SyncableList<HistoryRecord>, SyncableList<HistoryRecord>, HistoryRecord>;
 
+// ---------------------------------------------------------------------------------------------
+
 // Принял спорное архитектурное решение, что синхронизируемые объекты будут мутабельными.
-// Не хотелось заморачиваться с заменой ссылок в полносвязном дереве. Хотя может быть с copyWith() было бы короче.
-// Теперь почти вся логика merge инкапсулирована внутри сущностей.
+// Не хотелось заморачиваться с заменой ссылок в полносвязном дереве. Хотя все равно пришлось при синхронизации.
+// Зато теперь вся логика merge инкапсулирована внутри сущностей. Но и в случае copyWith() было бы так же.
 // Пришлось запихать несколько классов в один файл, так как в дарте отсутствует protected, а хотелось надежности.
 
 // ---------------------------------------------------------------------------------------------
@@ -46,20 +48,23 @@ abstract class Syncable {
   bool isNewer(Syncable other) => lastModified.isAfter(other.lastModified);
 
   /// использовать во всех потомках при ручном обновлении полей
-  void _update([VoidCallback? update]) {
-    update?.call();
-    _lastModified = DateTime.now();
+  @mustCallSuper
+  void _update(VoidCallback? updater, {bool raw = false}) {
+    updater?.call();
+    if (!raw) _lastModified = DateTime.now();
   }
 
   /// Используется стратегия Last Write Wins для всех полей
+  @mustBeOverridden
   @mustCallSuper
-  void mergeFrom(Syncable remote) {
-    _deleted = remote.deleted;
+  void mergeFrom(Syncable other) {
+    _deleted = other.deleted;
   }
 }
 
 // ---------------------------------------------------------------------------------------------
 
+// Класс сделан с единственной целью - чтобы не дублировать алгоритмы insert и merge
 @MappableClass()
 class SyncableList<T extends Syncable> with SyncableListMappable {
   final List<T> _items;
@@ -78,8 +83,8 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
         _items.insert(i + 1, item);
         return;
       }
-      _items.insert(0, item);
     }
+    _items.insert(0, item);
   }
 
   void merge(T other, bool Function(T item1, T intem2) softMergeCondition) {
@@ -127,39 +132,37 @@ class Deal extends Syncable with DealMappable {
   }) : _title = title,
        _records = records ?? SyncableList<HistoryRecord>() {
     for (var r in _records.items) {
-      r.deal = this; // восстанавливаем ссылку, обрубленную сериализатором
+      r.deal = this; // восстанавливаем ссылку, обрубленную сериализатором TODO: здесь неявное поведение, подумать как улучшить
     }
   }
 
   String get title => _title;
   void updateTitle(String title) => _update(() => _title = title);
 
-  Iterable<HistoryRecord> get records =>
-      _records.items.where((e) => !e.deleted); // возвращаем итератор, что не так надежно, но производительно
+  Iterable<HistoryRecord> get records => _records.items; // возвращаем итератор, что не так надежно, но производительно
 
   void addRecord(HistoryRecord record, {bool raw = false}) {
-    if (!raw) {
-      _update(() => _records.add(record));
-    } else {
-      _records.add(record);
-    }
+    record.deal = this;
+    _update(() => _records.add(record), raw: raw);
   }
 
-  void insertRecord(HistoryRecord record) => _records.insert(record);
-  // void removeRecord(HistoryRecord record) => _update(() => _records.remove(record));
+  void insertRecord(HistoryRecord record) {
+    record.deal = this;
+    _records.insert(record);
+  }
 
   bool get hasCalls => records.any((r) => r.phoneNumber != null);
   bool get hasAudios => records.any((r) => r.audioFileName != null);
   String? get lastPhoneNumber => records.firstWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;
 
   @override
-  void mergeFrom(covariant Deal remote) {
-    super.mergeFrom(remote);
+  void mergeFrom(covariant Deal other) {
+    super.mergeFrom(other);
 
-    _title = remote.title;
+    _title = other.title;
 
-    for (final remoteRecord in remote.records) {
-      _records.merge(remoteRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
+    for (final otherRecord in other.records) {
+      _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
   }
 }
@@ -172,8 +175,8 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   // но мы copyWith нигде не используем, а просто пишем в поля через методы updateXXX.
   @MappableField(hook: NullMappableFieldHook())
   // не делаем final по двум причинам:
-  // 1) при создании HistoryRecord с пустым Deal - объект Deal создается на основании полей HistoryRecord
-  // 2) при слиянии двух записей в одну (синхронизация по интервалам) - поле deal может перезаписываться
+  // 1) при создании HistoryRecord с пустым Deal - объект Deal создается позже на основании полей HistoryRecord
+  // 2) при слиянии двух дел в одно (синхронизация по интервалам) - поле deal у записи может перезаписываться
   Deal? deal;
   final DateTime startTime;
   final Duration duration;
@@ -182,8 +185,9 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   String? _textTranscription; // обновляется только при синхронизации-слиянии
   String? _note;
 
+  @MappableConstructor()
   HistoryRecord({
-    super.id,
+    required super.id,
     required this.deal,
     required this.startTime,
     required this.duration,
@@ -196,11 +200,44 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   }) : _phoneNumber = phoneNumber,
        _audioFileName = audioFileName,
        _textTranscription = textTranscription,
-       _note = note {
-    if (deal != null) {
-      deal!.addRecord(this); // TODO: здесь неявное поведение, подумать как улучшить
-    }
+       _note = note;
+
+  factory HistoryRecord.manually({
+    final Deal? deal,
+    required final DateTime startTime,
+    required final Duration duration,
+    final String? phoneNumber,
+    final String? audioFileName,
+    final String? textTranscription,
+    final String? note,
+  }) {
+    final record = HistoryRecord(
+      id: null,
+      deal: deal,
+      startTime: startTime,
+      duration: duration,
+      phoneNumber: phoneNumber,
+      audioFileName: audioFileName,
+      textTranscription: textTranscription,
+      note: note,
+    );
+    record.deal ??= record._newDealFromThis();
+    record.deal!.addRecord(record); // здесь происходит обновление _lastModified у Deal
+    return record;
   }
+
+  Deal _newDealFromThis() => Deal(
+    id: id,
+    created: startTime,
+    lastModified: startTime,
+    title: (textTranscription != null)
+        ? (textTranscription!.length <= 150)
+              ? textTranscription!
+              : '${textTranscription!.substring(0, 150)}...'
+        : (phoneNumber != null)
+        ? phoneNumber!
+        : startTime.toString(),
+  );
 
   String? get phoneNumber => _phoneNumber;
 
@@ -217,49 +254,19 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
 
   // Обновляем lastModified и у родителя
   @override
-  void _update([VoidCallback? update]) {
-    super._update(update);
-    if (deal != null) deal!._update();
+  void _update(VoidCallback? updater, {bool raw = false}) {
+    super._update(updater, raw: raw);
+    if (deal != null && !raw) deal!._update(null);
   }
 
   @override
-  void mergeFrom(covariant HistoryRecord remote) {
-    super.mergeFrom(remote);
+  void mergeFrom(covariant HistoryRecord other) {
+    super.mergeFrom(other);
 
-    if (remote.phoneNumber != null) _phoneNumber = remote.phoneNumber;
-    if (remote.audioFileName != null) _audioFileName = remote.audioFileName;
-    if (remote.textTranscription != null) _textTranscription = remote.textTranscription;
-    if (remote.note != null) _note = remote.note;
-  }
-
-  Future<void> saveToStorage() async {
-    final history = di<HistoryVm>();
-
-    if (deal == null) {
-      _setNewDealFromThis();
-      await history.addDeal(deal!);
-    } else {
-      await history.updateDeal(deal!);
-    }
-  }
-
-  Deal _setNewDealFromThis() {
-    if (deal != null) throw 'Field "deal" in instance of "HistoryRecord" is allready set';
-
-    deal = Deal(
-      id: id,
-      created: startTime,
-      lastModified: startTime,
-      title: (textTranscription != null)
-          ? (textTranscription!.length <= 150)
-                ? textTranscription!
-                : '${textTranscription!.substring(0, 150)}...'
-          : (phoneNumber != null)
-          ? phoneNumber!
-          : startTime.toString(),
-    )..addRecord(this);
-
-    return deal!;
+    _phoneNumber = other.phoneNumber ?? _phoneNumber;
+    _audioFileName = other.audioFileName ?? _audioFileName;
+    _textTranscription = other.textTranscription ?? _textTranscription;
+    _note = other.note ?? _note;
   }
 
   /// Вычисляет процент перекрытия интервалов, используется при merge звонка и аудиозаписи,
@@ -290,7 +297,8 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
     final totalMs = totalEnd.difference(totalStart).inMilliseconds;
 
     final res = (overlapMs / totalMs) * 100;
-    print('calculateOverlapPercentage: $res %');
+    Log('$runtimeType').inf('calculateOverlapPercentage: $res %');
+
     return (res >= 70);
   }
 }

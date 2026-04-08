@@ -25,4 +25,6 @@ class Log {
     dev.log(m, name: name, level: 1);
     on?.call(m);
   }
+
+  static void deb(dynamic i) => Log('LOGDEB').war(i);
 }

@@ -54,7 +54,7 @@ class HistorySyncVm with SimpleChangeNotifier {
     status = di<HistoryVm>().lastSyncStatus;
     if (status.role != .notAssigned) {
       notify(() {
-        startFuture = (status.role == .server) ? startAsServer() : Future.value(null);
+        startFuture = (status.role == .server) ? startAsServer() : connectAsClient(clientUrl: status.clientUrl);
         stage = .netConecting;
       });
     }
@@ -220,7 +220,6 @@ class HistorySyncVm with SimpleChangeNotifier {
 
   Future<List<String>> _processIncomingJson(List<Deal> remoteDeals) async {
     final history = di<HistoryVm>();
-    final localDeals = history.deals;
     final missingFileNames = <String>[];
 
     for (final remoteDeal in remoteDeals) {
