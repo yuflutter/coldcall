@@ -62,7 +62,7 @@ class HistoryVm with SimpleChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
 
       try {
-        _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!);
+        notify(() => _lastSyncStatus = SyncStatusMapper.fromJson(prefs.getString(_lastSyncStatusStorageKey)!));
       } catch (e, s) {
         _log.err(e, s);
         _lastSyncStatus = SyncStatus();
@@ -75,7 +75,10 @@ class HistoryVm with SimpleChangeNotifier {
       if (file.existsSync()) {
         final json = await file.readAsString();
         try {
-          notify(() => _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList()));
+          notify(() {
+            _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
+            _currentExpandedDeal = null;
+          });
         } catch (e, s) {
           _log.err(e, s);
           file.delete();
@@ -96,22 +99,15 @@ class HistoryVm with SimpleChangeNotifier {
     }
   }
 
-  Future<void> addDeal(Deal deal, {bool raw = false}) async {
-    _deals.add(deal);
-    if (!raw) {
-      notifyListeners();
-      await saveToStorage();
-    }
-  }
+  // Future<void> addDeal(Deal deal, {bool raw = false}) async {
+  //   _deals.add(deal);
+  //   if (!raw) {
+  //     notifyListeners();
+  //     await saveToStorage();
+  //   }
+  // }
 
-  void insertDeal(Deal deal) => _deals.insert(deal);
-
-  // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
-  // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
-  void mergeDeal(Deal other) => _deals.merge(
-    other,
-    (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
-  );
+  // void insertDeal(Deal deal) => _deals.insert(deal);
 
   // У нас сущности мутабельные, а этот метод нужен только для переупорядочивания списка
   // (держим список всегда отсортированным по дате последнего изменения)
@@ -124,6 +120,13 @@ class HistoryVm with SimpleChangeNotifier {
       await saveToStorage();
     }
   }
+
+  // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
+  // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
+  void mergeDeal(Deal other) => _deals.merge(
+    other,
+    (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
+  );
 
   Future<void> deleteHistoryRecord(HistoryRecord record) async {
     if (record.id == currentPlayingRecordId) await stopAndDisposeAudio();

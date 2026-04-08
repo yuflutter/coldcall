@@ -97,7 +97,7 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 
       // добавляем новую запись
       if (it == null) {
-        _items.add(other);
+        add(other);
         return;
       }
     }
@@ -148,10 +148,10 @@ class Deal extends Syncable with DealMappable {
     _update(() => _records.add(record), raw: raw);
   }
 
-  void insertRecord(HistoryRecord record) {
-    record.deal = this;
-    _records.insert(record);
-  }
+  // void insertRecord(HistoryRecord record) {
+  //   record.deal = this;
+  //   _records.insert(record);
+  // }
 
   bool get hasCalls => records.any((r) => r.phoneNumber != null);
   bool get hasAudios => records.any((r) => r.audioFileName != null);
