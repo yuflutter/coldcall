@@ -57,94 +57,90 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                         ],
                       ),
                     )
-                  : SimpleFutureBuilder(
-                      future: _model.startFuture!,
-                      builder: (context, _) {
-                        return Stack(
-                          children: [
-                            SingleChildScrollView(
-                              child: Padding(
-                                padding: .fromLTRB(8, 0, 0, 0),
-                                child: SelectableText(_model.userLog, style: TextStyle(color: Colors.grey)),
+                  : Stack(
+                      children: [
+                        SingleChildScrollView(
+                          child: Padding(
+                            padding: .fromLTRB(8, 0, 0, 0),
+                            child: SelectableText(_model.userLog, style: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+
+                        switch (_model.status.role) {
+                          .server => switch (_model.stage) {
+                            .qrScaning => Column(
+                              children: [
+                                Spacer(flex: 2),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                                  child: QrImageView(data: _model.qrServerUrl),
+                                ),
+                                Text(_model.qrServerUrl, style: TextStyle(color: Colors.grey)),
+                                Spacer(),
+                                Text(vpnMsg, style: TextStyle(color: Colors.black)),
+                                Spacer(),
+                              ],
+                            ),
+                            .netConecting => Center(
+                              child: Column(
+                                mainAxisSize: .min,
+                                crossAxisAlignment: .center,
+                                children: [
+                                  Text('Ожидаю подключения ...'),
+                                  Gap(20),
+                                  _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
+                                ],
+                              ),
+                            ),
+                            _ => _buildSyncStatus(context),
+                          },
+
+                          .client => switch (_model.stage) {
+                            .qrScaning => SafeArea(
+                              child: Stack(
+                                children: [
+                                  MobileScanner(
+                                    // непонятно в каком случае результат сканирования может быть null, поэтому поставил ! в конце
+                                    onDetect: (res) => _model.connectAsClient(rawClientUrl: res.barcodes.first.rawValue!),
+                                  ),
+                                  Positioned(
+                                    bottom: MediaQuery.of(context).size.height / 10,
+                                    left: 0,
+                                    right: 0,
+                                    child: Center(
+                                      child: Text(vpnMsg, style: TextStyle(color: Colors.white)),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
 
-                            switch (_model.status.role) {
-                              .server => switch (_model.stage) {
-                                .qrScaning => Column(
-                                  children: [
-                                    Spacer(flex: 2),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
-                                      child: QrImageView(data: _model.qrServerUrl),
+                            .netConecting => Center(
+                              child: Column(
+                                // mainAxisSize: .min,
+                                crossAxisAlignment: .center,
+                                children: [
+                                  Spacer(flex: 4),
+                                  Text('Попытка подключения к:\n${_model.qrClientUrl} ...'),
+                                  Gap(30),
+                                  Padding(
+                                    padding: .fromLTRB(20, 0, 20, 0),
+                                    child: Text(
+                                      'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети (либо один к другому), либо на одном из них включен VPN.\n\n',
                                     ),
-                                    Text(_model.qrServerUrl, style: TextStyle(color: Colors.grey)),
-                                    Spacer(),
-                                    Text(vpnMsg, style: TextStyle(color: Colors.black)),
-                                    Spacer(),
-                                  ],
-                                ),
-                                .netConecting => Center(
-                                  child: Column(
-                                    mainAxisSize: .min,
-                                    crossAxisAlignment: .center,
-                                    children: [
-                                      Text('Ожидаю подключения ...'),
-                                      Gap(20),
-                                      _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
-                                    ],
                                   ),
-                                ),
-                                _ => _buildSyncStatus(context),
-                              },
+                                  Gap(30),
+                                  _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
+                                  Spacer(flex: 3),
+                                ],
+                              ),
+                            ),
 
-                              .client => switch (_model.stage) {
-                                .qrScaning => SafeArea(
-                                  child: Stack(
-                                    children: [
-                                      MobileScanner(onDetect: (res) => _model.connectAsClient(clientUrl: res.barcodes[0].rawValue)),
-                                      Positioned(
-                                        bottom: MediaQuery.of(context).size.height / 10,
-                                        left: 0,
-                                        right: 0,
-                                        child: Center(
-                                          child: Text(vpnMsg, style: TextStyle(color: Colors.white)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                .netConecting => Center(
-                                  child: Column(
-                                    // mainAxisSize: .min,
-                                    crossAxisAlignment: .center,
-                                    children: [
-                                      Spacer(flex: 4),
-                                      Text('Попытка подключения к:\n${_model.qrClientUrl} ...'),
-                                      Gap(30),
-                                      Padding(
-                                        padding: .fromLTRB(20, 0, 20, 0),
-                                        child: Text(
-                                          'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети (либо один к другому), либо на одном из них включен VPN.\n\n',
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      _buildButton(context, onTap: _model.reconnectAsClient, actionText: 'Повторить'),
-                                      Gap(30),
-                                      _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
-                                      Spacer(flex: 3),
-                                    ],
-                                  ),
-                                ),
-
-                                _ => _buildSyncStatus(context),
-                              },
-                              _ => SizedBox(),
-                            },
-                          ],
-                        );
-                      },
+                            _ => _buildSyncStatus(context),
+                          },
+                          _ => SizedBox(),
+                        },
+                      ],
                     ),
             );
           },

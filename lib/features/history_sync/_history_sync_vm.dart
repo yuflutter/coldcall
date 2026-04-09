@@ -22,8 +22,6 @@ class HistorySyncVm with SimpleChangeNotifier {
   late SyncStatus status;
   var stage = SyncStage.roleSelecting;
 
-  Future<void>? startFuture;
-
   final _userLog = StringBuffer();
   String get userLog => _userLog.toString();
   late final _log = Log('$runtimeType', on: (m) => notify(() => _userLog.writeln(m)));
@@ -53,46 +51,50 @@ class HistorySyncVm with SimpleChangeNotifier {
 
     status = di<HistoryVm>().lastSyncStatus;
 
-    // TODO: Фоновая синхронизация сейчас не работает, продумать куда выводить ошибки и лог
+    // Если инфа о синхронизации сохранена в статусе - пропускаем стадии выбора роли и сканирования QR
+    switch (status.role) {
+      case .server:
+        notify(() => stage = .netConecting);
+        startAsServer();
 
-    if (status.role != .notAssigned) {
-      notify(() {
-        startFuture = (status.role == .server) ? startAsServer() : connectAsClient(clientUrl: status.clientUrl);
-        stage = .netConecting;
-      });
+      case .client:
+        notify(() => stage = .netConecting);
+        connectAsClient();
+
+      default:
     }
   }
 
-  void reconnectAsClient() => connectAsClient(clientUrl: status.clientUrl);
+  void setRole(final SyncRole role) async {
+    notify(() {
+      status = status.copyWith(role: role);
+      stage = .qrScaning;
+    });
+
+    if (role == .server) startAsServer();
+  }
 
   void clearConnectionInfo() {
     notify(() {
       status = status.copyWith(role: .notAssigned, serverIp: null, clientUrl: null);
       stage = SyncStage.roleSelecting;
+      _userLog.clear();
     });
-  }
-
-  void setRole(final SyncRole role) async {
-    String? serverIp;
-    if (role == .server) {
-      serverIp = await NetworkInfo().getWifiIP();
-      _log.war(serverIp);
-      if (serverIp == null) throw 'Не могу определить свой IP';
-    }
-    notify(() {
-      status = status.copyWith(role: role, serverIp: serverIp);
-      startFuture = (role == .server) ? startAsServer() : Future.value(null);
-      stage = .qrScaning;
-    });
+    _socket?.close();
+    _server?.close();
+    _channel?.sink.close();
   }
 
   Future<void> startAsServer() async {
-    final serverIp = await NetworkInfo().getWifiIP();
-    if (serverIp == null) throw 'Не могу определить свой IP';
-
     try {
+      String? serverIp;
+      serverIp = await NetworkInfo().getWifiIP();
+      if (serverIp == null) throw 'Can\'t determine my IP';
+
+      notify(() => status = status.copyWith(serverIp: serverIp));
+
       _server = await HttpServer.bind(InternetAddress.anyIPv4, di<AppConfig>().historySyncHttpPort);
-      _log.inf('Listening on $serverIp:${di<AppConfig>().historySyncHttpPort} ...');
+      _log.inf('Listening on ${status.serverIp}:${di<AppConfig>().historySyncHttpPort} ...');
 
       _server!.listen((request) async {
         notify(() => stage = .netConecting);
@@ -123,39 +125,44 @@ class HistorySyncVm with SimpleChangeNotifier {
     }
   }
 
-  Future<void> connectAsClient({required final String? clientUrl}) async {
-    if (clientUrl == null || !clientUrl.startsWith(_qrUrlPrefix)) return;
+  Future<void> connectAsClient({final String? rawClientUrl}) async {
+    if (rawClientUrl != null && !rawClientUrl.startsWith(_qrUrlPrefix)) {
+      throw 'Incorrect client URL: $rawClientUrl';
+    } else if (rawClientUrl != null) {
+      notify(() => status = status.copyWith(clientUrl: rawClientUrl.replaceFirst(_qrUrlPrefix, '')));
+    }
 
-    notify(() {
-      status = status.copyWith(clientUrl: clientUrl);
-      stage = .netConecting;
-    });
+    notify(() => stage = .netConecting);
 
-    try {
-      final url = clientUrl.replaceFirst(_qrUrlPrefix, '');
+    while (status.clientUrl != null) {
+      try {
+        _channel = WebSocketChannel.connect(Uri.parse(status.clientUrl!));
+        await _channel!.ready;
+        _log.inf('Connected to ${status.clientUrl}');
 
-      _channel = WebSocketChannel.connect(Uri.parse(url));
-      await _channel!.ready;
-      _log.inf('Connected to $url');
+        _wsSender = _channel!.sink.add;
+        _sendLastSyncTime();
 
-      _wsSender = _channel!.sink.add;
-      _sendLastSyncTime();
-
-      // Завершаем connectAsClient, так как она используется в FutureBuilder
-      () async {
-        try {
-          await for (final data in _channel!.stream) {
-            await _handleIncoming(data);
+        // Завершаем connectAsClient, так как она используется в FutureBuilder
+        () async {
+          try {
+            await for (final data in _channel!.stream) {
+              await _handleIncoming(data);
+            }
+          } catch (e, s) {
+            Err.add(e, s);
           }
-        } catch (e, s) {
-          Err.add(e, s);
-        }
-      }();
-      //
-    } catch (e, s) {
-      Err.add(e, s);
+        }();
+        return;
+        //
+      } catch (e) {
+        notify(() => _userLog.writeln(e.toString()));
+      }
+      await Future.delayed(Duration(seconds: 5));
     }
   }
+
+  Future<void> reconnectAsClient() => connectAsClient(rawClientUrl: status.clientUrl);
 
   // первое сообщение в сокет - отправляем время последней синхронизации, в ответ ожидаем того же
   void _sendLastSyncTime() {
