@@ -63,6 +63,8 @@ class HistorySyncVm with SimpleChangeNotifier {
     }
   }
 
+  void reconnectAsClient() => connectAsClient(clientUrl: status.clientUrl);
+
   void clearConnectionInfo() {
     notify(() {
       status = status.copyWith(role: .notAssigned, serverIp: null, clientUrl: null);

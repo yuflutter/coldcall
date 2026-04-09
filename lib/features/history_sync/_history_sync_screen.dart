@@ -117,10 +117,10 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
 
                                 .netConecting => Center(
                                   child: Column(
-                                    mainAxisSize: .min,
+                                    // mainAxisSize: .min,
                                     crossAxisAlignment: .center,
                                     children: [
-                                      Gap(100),
+                                      Spacer(flex: 4),
                                       Text('Попытка подключения к:\n${_model.qrClientUrl} ...'),
                                       Gap(30),
                                       Padding(
@@ -129,9 +129,11 @@ class _HistorySyncScreenState extends State<HistorySyncScreen> {
                                           'Если вы видите это сообщение несколько секунд - значит телефон-клиент не может найти телефон-сервер. Причина может быть в том, что телефоны не подключены к общей WiFi-сети (либо один к другому), либо на одном из них включен VPN.\n\n',
                                         ),
                                       ),
-                                      Gap(20),
+                                      Spacer(),
+                                      _buildButton(context, onTap: _model.reconnectAsClient, actionText: 'Повторить'),
+                                      Gap(30),
                                       _buildButton(context, onTap: _model.clearConnectionInfo, actionText: 'Сбросить'),
-                                      // TextButton(onPressed: () => Navigator.pop(context), child: Text('Закрыть')),
+                                      Spacer(flex: 3),
                                     ],
                                   ),
                                 ),
