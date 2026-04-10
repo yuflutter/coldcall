@@ -131,7 +131,7 @@ class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProvider
                                       decoration: BoxDecoration(color: Colors.green.withAlpha(100), borderRadius: BorderRadius.circular(8)),
                                       child: TextField(
                                         controller: _model.phoneEditingController,
-                                        autofocus: (_model.initialPhone?.isEmpty ?? true),
+                                        autofocus: (_model.initialPhone == null),
                                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.phone,

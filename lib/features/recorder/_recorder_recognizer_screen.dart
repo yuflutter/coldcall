@@ -1,6 +1,6 @@
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/simple_future_listenable_builders.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_vm.dart';
 import 'package:coldcall/widgets/action_button.dart';
 import 'package:flutter/material.dart';

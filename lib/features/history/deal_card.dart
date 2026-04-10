@@ -1,5 +1,5 @@
 import 'package:coldcall/core/di.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/user_session_vm.dart';

@@ -167,7 +167,7 @@ class CameraDialerVm with SimpleChangeNotifier {
     notify(() {
       selectedPhone = phone;
       frozenFramePath = framePath;
-      dialerOverlayModel = DialerVm(initialPhone: phone?.cleanNumber, closeFromOutside: _closeDialer);
+      dialerOverlayModel = DialerVm(initialPhone: phone, closeFromOutside: _closeDialer);
     });
 
     HapticFeedback.lightImpact();

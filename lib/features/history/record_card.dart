@@ -1,5 +1,5 @@
 import 'package:coldcall/core/di.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:flutter/material.dart';
@@ -329,7 +329,7 @@ class _RecordCardState extends State<RecordCard> {
     return InkWell(
       onTap: () => _call(record),
       child: Text(
-        record.phoneNumber!,
+        record.phoneNumber!.formattedNumber,
         style: const TextStyle(color: Colors.green, fontSize: 17, fontWeight: .bold),
       ),
     );

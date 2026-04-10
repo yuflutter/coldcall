@@ -19,7 +19,7 @@ class PhoneDetectorService {
         for (Match match in matches) {
           final String phoneNumber = match.group(0) ?? '';
 
-          final detectedPhone = DetectedPhoneNumber(originNumber: phoneNumber, boundingBox: block.boundingBox);
+          final detectedPhone = DetectedPhoneNumber(rawNumber: phoneNumber, boundingBox: block.boundingBox);
 
           // Проверяем минимальную длину (10 цифр)
           if (detectedPhone.isPhoneNumber) {

@@ -33,7 +33,7 @@ class PhonePainterOverlay extends CustomPainter {
 
       // Рисуем текст номера
       final textSpan = TextSpan(
-        text: phone.originNumber,
+        text: phone.rawNumber,
         style: TextStyle(
           color: isSelected ? Colors.red : Colors.green,
           fontSize: 14,

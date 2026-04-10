@@ -6,7 +6,7 @@ import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/sync_status.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:network_info_plus/network_info_plus.dart';

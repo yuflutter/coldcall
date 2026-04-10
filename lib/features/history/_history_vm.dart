@@ -5,8 +5,11 @@ import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
+import 'package:coldcall/entities/history_record.dart';
+import 'package:coldcall/entities/syncable.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/entities/sync_status.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
 import 'package:file_picker/file_picker.dart';
@@ -223,7 +226,7 @@ class HistoryVm with SimpleChangeNotifier {
     await FilePicker.platform.saveFile(dialogTitle: 'Сохранить аудиозапись', fileName: fileName, bytes: bytes);
   }
 
-  void showDialer(BuildContext context, {required Deal deal, String? phoneNumber}) {
+  void showDialer(BuildContext context, {required Deal deal, PhoneNumber? phoneNumber}) {
     notify(
       () => dialerOverlayModel = DialerVm(
         initialPhone: phoneNumber,

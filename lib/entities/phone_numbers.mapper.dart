@@ -22,33 +22,28 @@ class PhoneNumberMapper extends ClassMapperBase<PhoneNumber> {
   @override
   final String id = 'PhoneNumber';
 
-  static String _$originNumber(PhoneNumber v) => v.originNumber;
-  static const Field<PhoneNumber, String> _f$originNumber = Field(
-    'originNumber',
-    _$originNumber,
-  );
   static String _$cleanNumber(PhoneNumber v) => v.cleanNumber;
   static const Field<PhoneNumber, String> _f$cleanNumber = Field(
     'cleanNumber',
     _$cleanNumber,
-    mode: FieldMode.member,
   );
   static String _$formattedNumber(PhoneNumber v) => v.formattedNumber;
   static const Field<PhoneNumber, String> _f$formattedNumber = Field(
     'formattedNumber',
     _$formattedNumber,
-    mode: FieldMode.member,
   );
 
   @override
   final MappableFields<PhoneNumber> fields = const {
-    #originNumber: _f$originNumber,
     #cleanNumber: _f$cleanNumber,
     #formattedNumber: _f$formattedNumber,
   };
 
   static PhoneNumber _instantiate(DecodingData data) {
-    return PhoneNumber(originNumber: data.dec(_f$originNumber));
+    return PhoneNumber(
+      cleanNumber: data.dec(_f$cleanNumber),
+      formattedNumber: data.dec(_f$formattedNumber),
+    );
   }
 
   @override
@@ -111,7 +106,7 @@ extension PhoneNumberValueCopy<$R, $Out>
 
 abstract class PhoneNumberCopyWith<$R, $In extends PhoneNumber, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? originNumber});
+  $R call({String? cleanNumber, String? formattedNumber});
   PhoneNumberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -124,12 +119,16 @@ class _PhoneNumberCopyWithImpl<$R, $Out>
   late final ClassMapperBase<PhoneNumber> $mapper =
       PhoneNumberMapper.ensureInitialized();
   @override
-  $R call({String? originNumber}) => $apply(
-    FieldCopyWithData({if (originNumber != null) #originNumber: originNumber}),
+  $R call({String? cleanNumber, String? formattedNumber}) => $apply(
+    FieldCopyWithData({
+      if (cleanNumber != null) #cleanNumber: cleanNumber,
+      if (formattedNumber != null) #formattedNumber: formattedNumber,
+    }),
   );
   @override
   PhoneNumber $make(CopyWithData data) => PhoneNumber(
-    originNumber: data.get(#originNumber, or: $value.originNumber),
+    cleanNumber: data.get(#cleanNumber, or: $value.cleanNumber),
+    formattedNumber: data.get(#formattedNumber, or: $value.formattedNumber),
   );
 
   @override

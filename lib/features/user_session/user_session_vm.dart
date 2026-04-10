@@ -1,5 +1,5 @@
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/user_settings.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';

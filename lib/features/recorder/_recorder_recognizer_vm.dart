@@ -1,5 +1,5 @@
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
 import 'package:flutter/material.dart';
 
 /// Абстрактная вью-модель для одновременной записи аудио и распознавания речи в текст.

@@ -2,21 +2,25 @@ import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/_all_syncable_entities.dart';
+import 'package:coldcall/entities/deal.dart';
+import 'package:coldcall/entities/history_record.dart';
+import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 
 /// Одноразовая вьюмодель дозвонщика, после окончания записывает историю и уничтожается. Для нового звонка нужно создать новую модель.
 class DialerVm with SimpleChangeNotifier {
-  final String? initialPhone;
+  final PhoneNumber? initialPhone;
   final Deal? deal;
   final void Function(bool isCallEnded) closeFromOutside;
 
   DialerVm({this.initialPhone, this.deal, required this.closeFromOutside});
 
   late final phoneEditingController = TextEditingController(
-    text: di<AppConfig>().phoneNumberFormatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: initialPhone ?? '')).text,
+    text: di<AppConfig>().phoneNumberFormatter
+        .formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: initialPhone?.cleanNumber ?? ''))
+        .text,
   );
   String get phone => phoneEditingController.text.trim();
 
@@ -61,7 +65,7 @@ class DialerVm with SimpleChangeNotifier {
       deal: deal,
       startTime: startTime!,
       duration: DateTime.now().difference(startTime!),
-      phoneNumber: phone,
+      phoneNumber: PhoneNumber.fromRaw(rawNumber: phone),
     );
 
     await di<HistoryVm>().updateDeal(record.deal!);
