@@ -206,7 +206,7 @@ class _RecordCardState extends State<RecordCard> {
                                       if (record.phoneNumber != null)
                                         _buildTableRow(
                                           'Номер:',
-                                          record.phoneNumber ?? 'no phone',
+                                          record.phoneNumber?.formattedNumber ?? 'no phone',
                                           onTap: (record.phoneNumber != null) ? () => _call(record) : null,
                                         ),
                                       _buildTableRow('Начало:', _buildTimeDate(record.startTime)),
