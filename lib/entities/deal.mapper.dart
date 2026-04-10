@@ -24,8 +24,8 @@ class DealMapper extends ClassMapperBase<Deal> {
   @override
   final String id = 'Deal';
 
-  static int _$id(Deal v) => v.id;
-  static const Field<Deal, int> _f$id = Field('id', _$id, opt: true);
+  static String _$id(Deal v) => v.id;
+  static const Field<Deal, String> _f$id = Field('id', _$id, opt: true);
   static DateTime _$created(Deal v) => v.created;
   static const Field<Deal, DateTime> _f$created = Field(
     'created',
@@ -133,7 +133,7 @@ abstract class DealCopyWith<$R, $In extends Deal, $Out>
   >
   get _records;
   $R call({
-    int? id,
+    String? id,
     DateTime? created,
     String? title,
     SyncableList<HistoryRecord>? records,

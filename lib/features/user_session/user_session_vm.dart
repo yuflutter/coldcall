@@ -25,7 +25,7 @@ class UserSessionVm with SimpleChangeNotifier {
 
   late final PackageInfo packageInfo;
 
-  Future<void> initFromStorage() async {
+  Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final json = prefs.getString(_storageKey);
 

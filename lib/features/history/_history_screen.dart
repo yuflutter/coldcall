@@ -3,6 +3,7 @@ import 'package:coldcall/features/dialer/dialer_overlay.dart';
 import 'package:coldcall/features/history/deal_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/history_sync/_history_sync_screen.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -12,7 +13,8 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final _model = di<HistoryVm>();
+  final _storage = di<Storage>();
+  final _model = HistoryVm();
   static final _timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
 
   @override
@@ -24,50 +26,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _model,
+      listenable: _storage,
       builder: (context, _) {
-        final deals = _model.deals.toList();
-        return PopScope(
-          canPop: !_model.isDialerShown,
-          onPopInvokedWithResult: (didPop, result) {
-            if (!didPop) _model.dialerOverlayModel?.closeDialer(false);
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              title: (_model.lastSyncStatus.lastSyncTime != null)
-                  ? Column(
-                      mainAxisSize: .min,
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text('Синхронизировано', style: TextStyle(fontSize: 15)),
-                        Text(_timeDateFormat.format(_model.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
-                      ],
-                    )
-                  : Text('Настроить синхронизацию:'),
-              actions: [IconButton(onPressed: () => showHistorySyncScreen(context), icon: Icon(Icons.sync))],
-            ),
-            body: (deals.isEmpty)
-                ? Center(child: Text('История пуста'))
-                : SafeArea(
-                    child: Stack(
-                      children: [
-                        RefreshIndicator(
-                          onRefresh: _model.initFromStorage,
-                          child: ListView.builder(
-                            itemCount: deals.length,
-                            reverse: true,
-                            itemBuilder: (context, index) {
-                              final deal = deals[deals.length - 1 - index];
-                              return DealCard(deal: deal, key: Key(deal.id.toString()));
-                            },
-                          ),
+        return ListenableBuilder(
+          listenable: _model,
+          builder: (context, _) {
+            final deals = _storage.deals.toList();
+            return PopScope(
+              canPop: !_model.isDialerShown,
+              onPopInvokedWithResult: (didPop, result) {
+                if (!didPop) _model.dialerOverlayModel?.closeDialer(false);
+              },
+              child: Scaffold(
+                appBar: AppBar(
+                  title: (_storage.lastSyncStatus.lastSyncTime != null)
+                      ? Column(
+                          mainAxisSize: .min,
+                          crossAxisAlignment: .start,
+                          children: [
+                            Text('Синхронизировано', style: TextStyle(fontSize: 15)),
+                            Text(_timeDateFormat.format(_storage.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
+                          ],
+                        )
+                      : Text('Настроить синхронизацию:'),
+                  actions: [IconButton(onPressed: () => showHistorySyncScreen(context), icon: Icon(Icons.sync))],
+                ),
+                body: (deals.isEmpty)
+                    ? Center(child: Text('История пуста'))
+                    : SafeArea(
+                        child: Stack(
+                          children: [
+                            RefreshIndicator(
+                              onRefresh: _storage.init,
+                              child: ListView.builder(
+                                itemCount: deals.length,
+                                reverse: true,
+                                itemBuilder: (context, index) {
+                                  final deal = deals[deals.length - 1 - index];
+                                  return DealCard(deal: deal, key: Key(deal.id.toString()));
+                                },
+                              ),
+                            ),
+                            // // Панель набора номера с полноэкранным оверлеем
+                            if (_model.isDialerShown) DialerOverlay(model: _model.dialerOverlayModel!),
+                          ],
                         ),
-                        // // Панель набора номера с полноэкранным оверлеем
-                        if (_model.isDialerShown) DialerOverlay(model: _model.dialerOverlayModel!),
-                      ],
-                    ),
-                  ),
-          ),
+                      ),
+              ),
+            );
+          },
         );
       },
     );

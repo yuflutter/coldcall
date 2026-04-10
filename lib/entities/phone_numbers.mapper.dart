@@ -32,17 +32,26 @@ class PhoneNumberMapper extends ClassMapperBase<PhoneNumber> {
     'formattedNumber',
     _$formattedNumber,
   );
+  static String? _$_name(PhoneNumber v) => v._name;
+  static const Field<PhoneNumber, String> _f$_name = Field(
+    '_name',
+    _$_name,
+    key: r'name',
+    opt: true,
+  );
 
   @override
   final MappableFields<PhoneNumber> fields = const {
     #cleanNumber: _f$cleanNumber,
     #formattedNumber: _f$formattedNumber,
+    #_name: _f$_name,
   };
 
   static PhoneNumber _instantiate(DecodingData data) {
     return PhoneNumber(
       cleanNumber: data.dec(_f$cleanNumber),
       formattedNumber: data.dec(_f$formattedNumber),
+      name: data.dec(_f$_name),
     );
   }
 
@@ -106,7 +115,7 @@ extension PhoneNumberValueCopy<$R, $Out>
 
 abstract class PhoneNumberCopyWith<$R, $In extends PhoneNumber, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? cleanNumber, String? formattedNumber});
+  $R call({String? cleanNumber, String? formattedNumber, String? name});
   PhoneNumberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -119,16 +128,22 @@ class _PhoneNumberCopyWithImpl<$R, $Out>
   late final ClassMapperBase<PhoneNumber> $mapper =
       PhoneNumberMapper.ensureInitialized();
   @override
-  $R call({String? cleanNumber, String? formattedNumber}) => $apply(
+  $R call({
+    String? cleanNumber,
+    String? formattedNumber,
+    Object? name = $none,
+  }) => $apply(
     FieldCopyWithData({
       if (cleanNumber != null) #cleanNumber: cleanNumber,
       if (formattedNumber != null) #formattedNumber: formattedNumber,
+      if (name != $none) #name: name,
     }),
   );
   @override
   PhoneNumber $make(CopyWithData data) => PhoneNumber(
     cleanNumber: data.get(#cleanNumber, or: $value.cleanNumber),
     formattedNumber: data.get(#formattedNumber, or: $value.formattedNumber),
+    name: data.get(#name, or: $value._name),
   );
 
   @override

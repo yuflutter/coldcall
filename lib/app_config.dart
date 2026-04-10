@@ -2,6 +2,7 @@ import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/user_session_vm.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_vm_impl.dart';
 import 'package:coldcall/features/recorder/recognizer_service_vosk.dart';
@@ -58,6 +59,7 @@ Future<void> initApp() async {
   DI.put(AppConfig());
   DI.put(Err());
   DI.put(UserSessionVm());
+  DI.put(Storage());
   DI.put(HistoryVm());
 
   // Внимание!!! Если вы меняете реализацию рекогнайзера - не забудьте скопировать
@@ -72,6 +74,6 @@ Future<void> initApp() async {
   DI.put(RecorderRecognizerVmImpl());
 
   // Глобальные асинхронные инициализации (контекстные вьюмодели будут инициализированы в соотв. экранах и виджетах)
-  await di<UserSessionVm>().initFromStorage();
-  await di<HistoryVm>().initFromStorage();
+  await di<UserSessionVm>().init();
+  await di<Storage>().init();
 }

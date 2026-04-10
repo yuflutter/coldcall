@@ -7,9 +7,11 @@ import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
+// import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/recorder/recognizer_service.dart';
 import 'package:coldcall/features/recorder/_recorder_recognizer_vm.dart';
 import 'package:coldcall/features/recorder/recorder_session.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -127,7 +129,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
         textTranscription: textTranscription.substring(0, min(textTranscription.length, 500)),
       );
 
-      await di<HistoryVm>().updateDeal(record.deal!);
+      await di<Storage>().updateDeal(record.deal!);
 
       if (_session?.deal != null) di<HistoryVm>().expandDealCard(_session!.deal!);
 

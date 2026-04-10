@@ -8,7 +8,7 @@ import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/sync_status.dart';
-import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -49,7 +49,7 @@ class HistorySyncVm with SimpleChangeNotifier {
   Future<void> init() async {
     _localFilePath = (await getApplicationDocumentsDirectory()).path;
 
-    status = di<HistoryVm>().lastSyncStatus;
+    status = di<Storage>().lastSyncStatus;
 
     // Если инфа о синхронизации сохранена в статусе - пропускаем стадии выбора роли и сканирования QR
     switch (status.role) {
@@ -187,7 +187,7 @@ class HistorySyncVm with SimpleChangeNotifier {
           final remotLastSyncTime = DateTime.fromMillisecondsSinceEpoch(jsonDecode(incoming));
           notify(() => stage = .jsonSwap);
 
-          _wsSend(jsonEncode(di<HistoryVm>().notSyncedDeals(remotLastSyncTime).toList()));
+          _wsSend(jsonEncode(di<Storage>().notSyncedDeals(remotLastSyncTime).toList()));
 
         // принимаем json, отправляем список имен фойлов, в ответ ожидаем того же
         case .jsonSwap:
@@ -236,7 +236,7 @@ class HistorySyncVm with SimpleChangeNotifier {
   }
 
   Future<List<String>> _processIncomingJson(List<Deal> remoteDeals) async {
-    final history = di<HistoryVm>();
+    final storage = di<Storage>();
     final missingFileNames = <String>[];
 
     for (final remoteDeal in remoteDeals) {
@@ -251,19 +251,19 @@ class HistorySyncVm with SimpleChangeNotifier {
         }
       }
 
-      history.mergeDeal(remoteDeal);
+      storage.mergeDeal(remoteDeal);
     }
-    await history.saveToStorage();
-    history.notifyListeners();
+    await storage.saveToStorage();
+    storage.notifyListeners();
 
     return missingFileNames;
   }
 
   Future<void> _done() async {
     try {
-      final history = di<HistoryVm>();
-      await history.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
-      await history.saveToStorage();
+      final storage = di<Storage>();
+      await storage.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
+      await storage.saveToStorage();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);

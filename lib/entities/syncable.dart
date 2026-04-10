@@ -10,13 +10,13 @@ part 'syncable.mapper.dart';
 // Зато теперь вся логика merge инкапсулирована внутри сущностей. Хотя в случае copyWith() было бы так же.
 
 abstract class Syncable {
-  final int id;
+  final String id;
   final DateTime created;
   bool _deleted;
   DateTime _lastModified;
 
-  Syncable({final int? id, final DateTime? created, final bool? deleted, final DateTime? lastModified})
-    : id = id ?? DateTime.now().microsecondsSinceEpoch,
+  Syncable({final String? id, final DateTime? created, final bool? deleted, final DateTime? lastModified})
+    : id = id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       created = created ?? DateTime.now(),
       _deleted = deleted ?? false,
       _lastModified = lastModified ?? DateTime.now();
@@ -50,7 +50,7 @@ abstract class Syncable {
   }
 }
 
-// ---------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------
 
 // Упорядоченный список синхронизируемых объектов. Класс сделан с двумя целями:
 // 1) запретить простое добавление в конец

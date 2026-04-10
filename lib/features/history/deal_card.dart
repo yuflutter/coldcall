@@ -3,6 +3,7 @@ import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/user_session_vm.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
@@ -19,6 +20,7 @@ class DealCard extends StatefulWidget {
 class _DealCardState extends State<DealCard> {
   late final _deal = widget.deal;
   final _model = di<HistoryVm>();
+  final _storage = di<Storage>();
 
   var _isEditing = false;
   late final _titleEditController = TextEditingController(text: _deal.title);
@@ -30,99 +32,104 @@ class _DealCardState extends State<DealCard> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _model,
+      listenable: _storage,
       builder: (context, _) {
-        return Column(
-          children: [
-            InkWell(
-              onTap: () => _model.expandCollapseDeal(_deal),
-              onLongPress: () => _showDeleteDealDialog(context, _deal),
-              child: PopScope(
-                canPop: !_isEditing,
-                onPopInvokedWithResult: (didPop, result) {
-                  if (!didPop) _cancelEditing();
-                },
-                child: Card(
-                  margin: .fromLTRB(0, 4, 0, 4),
-                  color: Colors.white24,
-                  child: Padding(
-                    padding: const .fromLTRB(10, 7, 0, 7),
-                    child: Column(
-                      crossAxisAlignment: .stretch,
-                      children: [
-                        Row(
-                          crossAxisAlignment: .start,
+        return ListenableBuilder(
+          listenable: _model,
+          builder: (context, _) {
+            return Column(
+              children: [
+                InkWell(
+                  onTap: () => _model.expandCollapseDeal(_deal),
+                  onLongPress: () => _showDeleteDealDialog(context, _deal),
+                  child: PopScope(
+                    canPop: !_isEditing,
+                    onPopInvokedWithResult: (didPop, result) {
+                      if (!didPop) _cancelEditing();
+                    },
+                    child: Card(
+                      margin: .fromLTRB(0, 4, 0, 4),
+                      color: Colors.white24,
+                      child: Padding(
+                        padding: const .fromLTRB(10, 7, 0, 7),
+                        child: Column(
+                          crossAxisAlignment: .stretch,
                           children: [
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  if (!_isEditing)
-                                    RichText(
-                                      // maxLines: 3,
-                                      // overflow: .ellipsis,
-                                      text: TextSpan(
-                                        children: [
-                                          WidgetSpan(
-                                            child: Row(
-                                              mainAxisSize: .min,
-                                              children: [
-                                                if (_deal.hasCalls) Icon(Icons.call, size: 14),
-                                                if (_deal.hasAudios) Icon(Icons.mic, size: 17),
-                                                if (_deal.hasCalls || _deal.hasAudios) Gap(8),
-                                              ],
-                                            ),
+                            Row(
+                              crossAxisAlignment: .start,
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      if (!_isEditing)
+                                        RichText(
+                                          // maxLines: 3,
+                                          // overflow: .ellipsis,
+                                          text: TextSpan(
+                                            children: [
+                                              WidgetSpan(
+                                                child: Row(
+                                                  mainAxisSize: .min,
+                                                  children: [
+                                                    if (_deal.hasCalls) Icon(Icons.call, size: 14),
+                                                    if (_deal.hasAudios) Icon(Icons.mic, size: 17),
+                                                    if (_deal.hasCalls || _deal.hasAudios) Gap(8),
+                                                  ],
+                                                ),
+                                              ),
+                                              TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
+                                            ],
                                           ),
-                                          TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
-                                        ],
+                                        )
+                                      else
+                                        TextField(
+                                          controller: _titleEditController,
+                                          autofocus: true,
+                                          maxLines: 3,
+                                          textInputAction: TextInputAction.done,
+                                          onSubmitted: _saveEditing,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                if (!_isEditing)
+                                  PopupMenuButton(
+                                    itemBuilder: (context) => [
+                                      // PopupMenuItem(onTap: () => _model.expandCollapseDeal(_deal), child: Text('Детали...')),
+                                      PopupMenuItem(
+                                        onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
+                                        child: Text('Позвонить'),
                                       ),
-                                    )
-                                  else
-                                    TextField(
-                                      controller: _titleEditController,
-                                      autofocus: true,
-                                      maxLines: 3,
-                                      textInputAction: TextInputAction.done,
-                                      onSubmitted: _saveEditing,
-                                    ),
+                                      PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(_deal), child: Text('Записать')),
+                                      PopupMenuItem(onTap: () => setState(() => _isEditing = true), child: Text('Редактировать заголовок')),
+                                      PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
+                                    ],
+                                  )
+                                else
+                                  IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
+                              ],
+                            ),
+                            Padding(
+                              padding: const .fromLTRB(0, 0, 5, 0),
+                              child: Row(
+                                children: [
+                                  Text(_dateTimeFormat.format(_deal.created), style: _dateTextStyle),
+                                  Spacer(),
+                                  if (_deal.lastModified != _deal.created)
+                                    Text(_dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
                                 ],
                               ),
                             ),
-                            if (!_isEditing)
-                              PopupMenuButton(
-                                itemBuilder: (context) => [
-                                  // PopupMenuItem(onTap: () => _model.expandCollapseDeal(_deal), child: Text('Детали...')),
-                                  PopupMenuItem(
-                                    onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
-                                    child: Text('Позвонить'),
-                                  ),
-                                  PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(_deal), child: Text('Записать')),
-                                  PopupMenuItem(onTap: () => setState(() => _isEditing = true), child: Text('Редактировать заголовок')),
-                                  PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
-                                ],
-                              )
-                            else
-                              IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
                           ],
                         ),
-                        Padding(
-                          padding: const .fromLTRB(0, 0, 5, 0),
-                          child: Row(
-                            children: [
-                              Text(_dateTimeFormat.format(_deal.created), style: _dateTextStyle),
-                              Spacer(),
-                              if (_deal.lastModified != _deal.created)
-                                Text(_dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            if (_model.currentExpandedDealId == _deal.id) _buildDealRecordsList(_deal),
-          ],
+                if (_model.currentExpandedDealId == _deal.id) _buildDealRecordsList(_deal),
+              ],
+            );
+          },
         );
       },
     );
@@ -173,11 +180,11 @@ class _DealCardState extends State<DealCard> {
   void _saveEditing(String title) async {
     _deal.updateTitle(title);
     setState(() => _isEditing = false);
-    await _model.updateDeal(_deal);
+    await _storage.updateDeal(_deal);
   }
 
   void _deleteDeal(Deal deal) {
-    _model.deleteDeal(deal);
+    _storage.deleteDeal(deal);
     Navigator.pop(context);
   }
 }

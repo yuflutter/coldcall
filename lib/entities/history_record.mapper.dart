@@ -24,8 +24,8 @@ class HistoryRecordMapper extends ClassMapperBase<HistoryRecord> {
   @override
   final String id = 'HistoryRecord';
 
-  static int _$id(HistoryRecord v) => v.id;
-  static const Field<HistoryRecord, int> _f$id = Field('id', _$id);
+  static String _$id(HistoryRecord v) => v.id;
+  static const Field<HistoryRecord, String> _f$id = Field('id', _$id);
   static Deal? _$deal(HistoryRecord v) => v.deal;
   static const Field<HistoryRecord, Deal> _f$deal = Field(
     'deal',
@@ -177,7 +177,7 @@ abstract class HistoryRecordCopyWith<$R, $In extends HistoryRecord, $Out>
   DealCopyWith<$R, Deal, Deal>? get deal;
   PhoneNumberCopyWith<$R, PhoneNumber, PhoneNumber>? get _phoneNumber;
   $R call({
-    int? id,
+    String? id,
     Deal? deal,
     DateTime? startTime,
     Duration? duration,

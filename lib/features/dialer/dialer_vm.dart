@@ -5,7 +5,7 @@ import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
-import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 
@@ -68,6 +68,6 @@ class DialerVm with SimpleChangeNotifier {
       phoneNumber: PhoneNumber.fromRaw(rawNumber: phone),
     );
 
-    await di<HistoryVm>().updateDeal(record.deal!);
+    await di<Storage>().updateDeal(record.deal!);
   }
 }
