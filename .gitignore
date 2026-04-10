@@ -44,12 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# убираем тяжелые ML-модели из гита, в коде есть ссылки откуда скачать
-# Модель слишком толстая, загрузить по ссылкам в коде
+# Убираем тяжелые ML-модели из гита, в коде есть ссылки откуда скачать
 /assets/model.int8.onnx
 /assets/silero_vad.onnx
 /assets/tokens.txt
 /assets/vosk-model-small-ru-0.22.zip
 /assets/model-giga-am/giga-am-v2.zip
 
-/assets/upload-keystore.jks
+/upload-keystore.jks
