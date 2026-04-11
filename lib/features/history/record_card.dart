@@ -24,22 +24,41 @@ class _RecordCardState extends State<RecordCard> {
   BuildContext? _detailsBottomSheetContext;
   bool get _isDetailsExpanded => (_detailsBottomSheetContext != null);
 
-  var _isEditing = false;
+  var _isNoteEditing = false;
   late final _noteEditController = TextEditingController(text: _record.note);
 
-  void _startEditing() {
-    setState(() => _isEditing = true);
+  void _startNoteEditing() {
+    setState(() => _isNoteEditing = true);
   }
 
-  void _cancelEditing() {
-    _noteEditController.text = _record.note ?? '';
-    setState(() => _isEditing = false);
-  }
-
-  void _saveEditing(String note) async {
+  void _saveNoteEditing([String? note]) async {
+    note ??= _noteEditController.text;
     _record.updateNote(note.trim());
     await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-    _cancelEditing();
+    _cancelAllEditing();
+  }
+
+  var _isNameEditing = false;
+  late final _nameEditController = TextEditingController(text: _record.phoneNumber?.name);
+
+  void _startNameEditing() {
+    setState(() => _isNameEditing = true);
+  }
+
+  void _saveNameEditing([String? name]) async {
+    name ??= _nameEditController.text;
+    _record.phoneNumber?.updateName(name.trim());
+    await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+    _cancelAllEditing();
+  }
+
+  void _cancelAllEditing() {
+    _noteEditController.text = _record.note ?? '';
+    _nameEditController.text = _record.phoneNumber?.name ?? '';
+    setState(() {
+      _isNoteEditing = false;
+      _isNameEditing = false;
+    });
   }
 
   void _deleteRecord(HistoryRecord record) {
@@ -66,9 +85,9 @@ class _RecordCardState extends State<RecordCard> {
           listenable: _model,
           builder: (context, _) {
             return PopScope(
-              canPop: !_isEditing,
+              canPop: !_isNoteEditing,
               onPopInvokedWithResult: (didPop, result) {
-                if (!didPop) _cancelEditing();
+                if (!didPop) _cancelAllEditing();
               },
               child: Card(
                 margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
@@ -114,36 +133,52 @@ class _RecordCardState extends State<RecordCard> {
                             ],
 
                             if (_record.phoneNumber != null)
-                              if (!_isEditing)
+                              if (!_isNoteEditing && !_isNameEditing)
                                 SizedBox(
                                   height: 40,
                                   child: PopupMenuButton(
                                     itemBuilder: (context) => [
-                                      PopupMenuItem(onTap: () => _startEditing(), child: Text('Примечание к звонку')),
-                                      PopupMenuItem(onTap: null, child: Text('Имя контакта')),
+                                      PopupMenuItem(onTap: _startNoteEditing, child: Text('Добавить примечание к звонку')),
+                                      PopupMenuItem(onTap: _startNameEditing, child: Text('Редактировать имя контакта')),
                                     ],
                                   ),
                                 )
-                              else
-                                IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
+                              else ...[
+                                if (_isNoteEditing)
+                                  IconButton(onPressed: _saveNoteEditing, icon: Icon(Icons.save))
+                                else if (_isNameEditing)
+                                  IconButton(onPressed: _saveNameEditing, icon: Icon(Icons.save)),
+                                IconButton(onPressed: _cancelAllEditing, icon: Icon(Icons.cancel)),
+                              ],
                           ],
                         ),
 
                         if (isAudioPlaying && !_isDetailsExpanded) AudioPlayerControl(),
 
                         if (_record.phoneNumber != null) _buildPhoneNumber(_record),
+                        if (_isNameEditing)
+                          TextField(
+                            controller: _nameEditController,
+                            autofocus: true,
+                            minLines: 1,
+                            maxLines: 3,
+                            // textInputAction: TextInputAction.done,
+                            onSubmitted: _saveNameEditing,
+                          ),
 
-                        if (_record.note != null && !_isEditing)
+                        if (_record.note != null && !_isNoteEditing)
                           Padding(
                             padding: .fromLTRB(0, 5, 5, 0),
                             child: Text(_record.note!, style: TextStyle(fontSize: 15)),
                           ),
-                        if (_isEditing)
+                        if (_isNoteEditing)
                           TextField(
                             controller: _noteEditController,
                             autofocus: true,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: _saveEditing,
+                            minLines: 1,
+                            maxLines: 5,
+                            // textInputAction: TextInputAction.done,
+                            onSubmitted: _saveNoteEditing,
                           ),
 
                         if (_record.textTranscription != null && _record.phoneNumber != null) Gap(8),
@@ -331,11 +366,20 @@ class _RecordCardState extends State<RecordCard> {
   }
 
   Widget _buildPhoneNumber(HistoryRecord record) {
-    return InkWell(
-      onTap: () => _call(record),
-      child: Text(
-        record.phoneNumber!.formattedNumber,
-        style: const TextStyle(color: Colors.green, fontSize: 17, fontWeight: .bold),
+    return RichText(
+      text: TextSpan(
+        children: [
+          WidgetSpan(
+            child: InkWell(
+              onTap: () => _call(record),
+              child: Text(
+                record.phoneNumber!.formattedNumber,
+                style: const TextStyle(color: Colors.green, fontSize: 17, fontWeight: .bold),
+              ),
+            ),
+          ),
+          if (record.phoneNumber?.name != null && !_isNameEditing) TextSpan(text: '\n(${record.phoneNumber?.name})'),
+        ],
       ),
     );
   }

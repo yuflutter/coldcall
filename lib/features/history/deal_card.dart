@@ -83,7 +83,8 @@ class _DealCardState extends State<DealCard> {
                                         TextField(
                                           controller: _titleEditController,
                                           autofocus: true,
-                                          maxLines: 3,
+                                          minLines: 2,
+                                          maxLines: 5,
                                           // textInputAction: TextInputAction.done,
                                           onSubmitted: _saveEditing,
                                         ),
@@ -178,7 +179,7 @@ class _DealCardState extends State<DealCard> {
 
   void _saveEditing([String? title]) async {
     title ??= _titleEditController.text;
-    _deal.updateTitle(title);
+    _deal.updateTitle(title.trim());
     setState(() => _isEditing = false);
     await _storage.addOrUpdateAndSaveDeal(_deal);
   }
