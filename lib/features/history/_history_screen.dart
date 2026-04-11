@@ -14,8 +14,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final _storage = di<Storage>();
-  final _model = HistoryVm();
-  static final _timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
+  final _model = di<HistoryVm>();
 
   @override
   void dispose() {
@@ -45,7 +44,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           crossAxisAlignment: .start,
                           children: [
                             Text('Синхронизировано', style: TextStyle(fontSize: 15)),
-                            Text(_timeDateFormat.format(_storage.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
+                            Text(timeDateFormat.format(_storage.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
                           ],
                         )
                       : Text('Настроить синхронизацию:'),
@@ -81,8 +80,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
-final labelStyle = TextStyle(color: Colors.grey[400], fontSize: 16);
-final valueStyle = TextStyle(color: Colors.white, fontSize: 17);
+final dateTimeFormat = DateFormat('dd.MM.yyyy HH:mm ');
+final timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
 
 String formatDuration(Duration duration) {
   final minutes = duration.inMinutes;

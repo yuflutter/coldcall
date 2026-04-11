@@ -15,8 +15,9 @@ class HistoryVm with SimpleChangeNotifier {
   // раскрытие карточки Deal
   Deal? _currentExpandedDeal;
   String? get currentExpandedDealId => _currentExpandedDeal?.id;
-  void expandDealCard(Deal deal) {
-    notify(() => _currentExpandedDeal = deal);
+
+  void expandCollapseDealCard(Deal deal, {bool forceExpand = false}) {
+    notify(() => _currentExpandedDeal = (_currentExpandedDeal != deal || forceExpand) ? deal : null);
   }
 
   // аудиоплеер
@@ -26,17 +27,9 @@ class HistoryVm with SimpleChangeNotifier {
   Duration get currentPlayingPosition => _audioSession?.position ?? Duration.zero;
   Duration get currentPlayingDuration => _audioSession?.duration ?? Duration.zero;
 
-  // диалер
+  // дозвонщик
   DialerVm? dialerOverlayModel;
   bool get isDialerShown => (dialerOverlayModel != null);
-
-  void expandCollapseDeal(Deal deal) {
-    notify(() => _currentExpandedDeal = (_currentExpandedDeal != deal) ? deal : null);
-  }
-
-  void expandDeal(Deal deal) {
-    notify(() => _currentExpandedDeal = deal);
-  }
 
   Future<void> startStopAudio(BuildContext context, HistoryRecord record) async {
     try {
@@ -88,7 +81,7 @@ class HistoryVm with SimpleChangeNotifier {
   void _closeDialer(BuildContext context, bool isCallEnded, Deal deal) async {
     notify(() => dialerOverlayModel = null);
     if (isCallEnded) {
-      expandDealCard(deal);
+      expandCollapseDealCard(deal, forceExpand: true);
       if (context.mounted) showToastification(context, 'Звонок сохранен в историю');
     }
   }

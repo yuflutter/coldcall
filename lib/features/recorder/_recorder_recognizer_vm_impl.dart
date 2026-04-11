@@ -131,7 +131,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
 
       await di<Storage>().updateDeal(record.deal!);
 
-      if (_session?.deal != null) di<HistoryVm>().expandDealCard(_session!.deal!);
+      if (_session?.deal != null) di<HistoryVm>().expandCollapseDealCard(_session!.deal!, forceExpand: true);
 
       // Сессия обнуляется, но еще не dispopsed, поэтому распознанный текст продолжает отображаться на экране
       if (context.mounted) showToastification(context, 'Запись сохранена в историю');

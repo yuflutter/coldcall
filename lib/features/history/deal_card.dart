@@ -1,12 +1,12 @@
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/entities/deal.dart';
+import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/user_session_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:intl/intl.dart';
 
 class DealCard extends StatefulWidget {
   final Deal deal;
@@ -25,8 +25,6 @@ class _DealCardState extends State<DealCard> {
   var _isEditing = false;
   late final _titleEditController = TextEditingController(text: _deal.title);
 
-  static final _dateTimeFormat = DateFormat('dd.MM.yyyy HH:mm ');
-  static final timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
   static final _dateTextStyle = TextStyle(fontSize: 14, color: Colors.grey);
 
   @override
@@ -40,7 +38,7 @@ class _DealCardState extends State<DealCard> {
             return Column(
               children: [
                 InkWell(
-                  onTap: () => _model.expandCollapseDeal(_deal),
+                  onTap: () => _model.expandCollapseDealCard(_deal),
                   onLongPress: () => _showDeleteDealDialog(context, _deal),
                   child: PopScope(
                     canPop: !_isEditing,
@@ -113,10 +111,10 @@ class _DealCardState extends State<DealCard> {
                               padding: const .fromLTRB(0, 0, 5, 0),
                               child: Row(
                                 children: [
-                                  Text(_dateTimeFormat.format(_deal.created), style: _dateTextStyle),
+                                  Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
                                   Spacer(),
                                   if (_deal.lastModified != _deal.created)
-                                    Text(_dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
+                                    Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
                                 ],
                               ),
                             ),
@@ -140,7 +138,7 @@ class _DealCardState extends State<DealCard> {
   }
 
   void _showDeleteDealDialog(BuildContext context, Deal deal) {
-    _model.expandDeal(deal);
+    _model.expandCollapseDealCard(deal, forceExpand: true);
 
     showDialog(
       context: context,

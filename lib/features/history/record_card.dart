@@ -290,19 +290,19 @@ class _RecordCardState extends State<RecordCard> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
-          child: Text(label, style: labelStyle),
+          child: Text(label, style: _labelStyle),
         ),
         SizedBox(width: 10),
         (onTap == null)
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
-                child: (value is Widget) ? value : Text(value.toString(), style: valueStyle),
+                child: (value is Widget) ? value : Text(value.toString(), style: _valueStyle),
               )
             : InkWell(
                 onTap: onTap,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
-                  child: (value is Widget) ? value : Text(value.toString(), style: valueStyle.copyWith(color: Colors.greenAccent)),
+                  child: (value is Widget) ? value : Text(value.toString(), style: _valueStyle.copyWith(color: Colors.greenAccent)),
                 ),
               ),
       ],
@@ -316,7 +316,7 @@ class _RecordCardState extends State<RecordCard> {
         backgroundColor: Colors.grey[900],
         title: const Text('Удалить запись?', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Вы уверены, что хотите удалить запись истории от ${dateFormatAll.format(record.startTime)}?',
+          'Вы уверены, что хотите удалить запись истории от ${timeDateFormat.format(record.startTime)}?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -345,18 +345,19 @@ class _RecordCardState extends State<RecordCard> {
       mainAxisSize: .min,
       children: [
         Text(
-          _dateFormatTime.format(date),
+          _onlyTimeFormat.format(date),
           style: TextStyle(color: Colors.white70, fontSize: 15, fontWeight: .bold),
         ),
         Gap(10),
-        Text(_dateFormatDate.format(date), style: TextStyle(color: Colors.white70, fontSize: 15)),
+        Text(_onlyDateFormat.format(date), style: TextStyle(color: Colors.white70, fontSize: 15)),
       ],
     );
   }
 
-  static final dateFormatAll = DateFormat('HH:mm dd.MM.yyyy');
-  static final _dateFormatTime = DateFormat('HH:mm');
-  static final _dateFormatDate = DateFormat('dd.MM.yyyy');
+  static final _onlyTimeFormat = DateFormat('HH:mm');
+  static final _onlyDateFormat = DateFormat('dd.MM.yyyy');
+  final _labelStyle = TextStyle(color: Colors.grey[400], fontSize: 16);
+  final _valueStyle = TextStyle(color: Colors.white, fontSize: 17);
 }
 
 class AudioPlayerControl extends StatelessWidget {
