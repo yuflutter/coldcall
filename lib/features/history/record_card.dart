@@ -38,7 +38,7 @@ class _RecordCardState extends State<RecordCard> {
 
   void _saveEditing(String note) async {
     _record.updateNote(note.trim());
-    await _storage.updateDeal(_record.deal!);
+    await _storage.addOrUpdateAndSaveDeal(_record.deal!);
     _cancelEditing();
   }
 

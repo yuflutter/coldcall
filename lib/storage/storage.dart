@@ -21,12 +21,12 @@ class Storage with SimpleChangeNotifier {
   Iterable<Deal> notSyncedDeals(DateTime? lastSyncTime) =>
       _deals.items.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
-  var _phoneBook = Map<String, PhoneNumber>();
+  var _phoneBook = SyncableMap<PhoneNumber>();
   // для интерфейса
-  Iterable<PhoneNumber> get phoneBook => _phoneBook.values;
+  Iterable<PhoneNumber> get phoneBook => _phoneBook.items;
   // для синхронизатора
   Iterable<PhoneNumber> notSyncedPhoneBook(DateTime? lastSyncTime) =>
-      _phoneBook.values.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
+      _phoneBook.items.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
@@ -56,7 +56,9 @@ class Storage with SimpleChangeNotifier {
         try {
           final json = await file.readAsString();
           _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
-          Log.deb(_deals.length);
+          for (final deal in _deals.items) {
+            deal.normalizePhoneNumbers(_phoneBook);
+          }
           notifyListeners();
         } catch (e, s) {
           _log.err(e, s);
@@ -81,7 +83,7 @@ class Storage with SimpleChangeNotifier {
     }
   }
 
-  Future<void> saveToStorage() async {
+  Future<void> saveAllToStorage() async {
     try {
       final json = jsonEncode(deals.map((e) => e.toJson()).toList());
       final file = File(_storageFilePath);
@@ -103,22 +105,26 @@ class Storage with SimpleChangeNotifier {
 
   // У нас сущности мутабельные, а этот метод нужен только для переупорядочивания списка
   // (держим список всегда отсортированным по дате последнего изменения)
-  Future<void> updateDeal(Deal deal, {bool raw = false}) async {
+  Future<void> addOrUpdateAndSaveDeal(Deal deal, {bool raw = false}) async {
+    deal.normalizePhoneNumbers(_phoneBook);
     _deals
       ..remove(deal)
       ..insert(deal);
     if (!raw) {
       notifyListeners();
-      await saveToStorage();
+      await saveAllToStorage();
     }
   }
 
   // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
   // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
-  void mergeDeal(Deal other) => _deals.merge(
-    other,
-    (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
-  );
+  void mergeAndSaveDeal(Deal other) {
+    other.normalizePhoneNumbers(_phoneBook);
+    _deals.merge(
+      other,
+      (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
+    );
+  }
 
   Future<void> deleteHistoryRecord(HistoryRecord record) async {
     // Файлы пока не удаляем, может сделать режим восстановления из корзины?
@@ -136,7 +142,7 @@ class Storage with SimpleChangeNotifier {
 
     record.markDeleted();
     notifyListeners();
-    await saveToStorage();
+    await saveAllToStorage();
   }
 
   Future<void> deleteDeal(Deal deal) async {
@@ -146,6 +152,6 @@ class Storage with SimpleChangeNotifier {
     // }
     deal.markDeleted();
     notifyListeners();
-    await saveToStorage();
+    await saveAllToStorage();
   }
 }

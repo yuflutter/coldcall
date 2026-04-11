@@ -129,7 +129,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
         textTranscription: textTranscription.substring(0, min(textTranscription.length, 500)),
       );
 
-      await di<Storage>().updateDeal(record.deal!);
+      await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
 
       if (_session?.deal != null) di<HistoryVm>().expandCollapseDealCard(_session!.deal!, forceExpand: true);
 

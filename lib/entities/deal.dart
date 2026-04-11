@@ -31,6 +31,13 @@ class Deal extends Syncable with DealMappable {
     }
   }
 
+  // Нормализуем ссылки на номера телефонов при десериализации или ручном создании записи
+  void normalizePhoneNumbers(SyncableMap<PhoneNumber> phoneBook) {
+    for (final record in _records.items) {
+      record.normalizePhoneNumber(phoneBook);
+    }
+  }
+
   String get title => _title;
   void updateTitle(String title) => update(() => _title = title);
 

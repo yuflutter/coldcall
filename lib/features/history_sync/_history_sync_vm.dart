@@ -251,9 +251,9 @@ class HistorySyncVm with SimpleChangeNotifier {
         }
       }
 
-      storage.mergeDeal(remoteDeal);
+      storage.mergeAndSaveDeal(remoteDeal);
     }
-    await storage.saveToStorage();
+    await storage.saveAllToStorage();
     storage.notifyListeners();
 
     return missingFileNames;
@@ -263,7 +263,7 @@ class HistorySyncVm with SimpleChangeNotifier {
     try {
       final storage = di<Storage>();
       await storage.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
-      await storage.saveToStorage();
+      await storage.saveAllToStorage();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);

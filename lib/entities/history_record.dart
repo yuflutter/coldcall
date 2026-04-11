@@ -12,8 +12,8 @@ part 'history_record.mapper.dart';
 
 @MappableClass()
 class HistoryRecord extends Syncable with HistoryRecordMappable {
-  // избегаем рекурсии при сериализации, к сожалению при любом copyWith поле тоже пропадает,
-  // но мы copyWith нигде не используем, а просто пишем в поля через методы updateXXX.
+  // Обрубаем ссылку при сериализации (избегаем рекурсии), но к сожалению при любом copyWith поле тоже пропадает,
+  // но мы copyWith в этом классе не используем, а просто пишем в поля через методы updateXXX.
   @MappableField(hook: NullMappableFieldHook())
   // не делаем final по двум причинам:
   // 1) при создании HistoryRecord с пустым Deal - объект Deal создается позже на основании полей HistoryRecord
@@ -21,7 +21,10 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
   Deal? deal;
   final DateTime startTime;
   final Duration duration;
+  // Сериализуем только ID, объектную ссылку восстанавливаем при десериализации
+  @MappableField(hook: NullMappableFieldHook())
   PhoneNumber? _phoneNumber; // обновляется только при синхронизации-слиянии
+  String? _phoneNumberId;
   String? _audioFileName; // обновляется только при синхронизации-слиянии
   String? _textTranscription; // обновляется только при синхронизации-слиянии
   String? _note;
@@ -33,12 +36,14 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
     required this.startTime,
     required this.duration,
     final PhoneNumber? phoneNumber,
+    final String? phoneNumberId,
     final String? audioFileName,
     final String? textTranscription,
     final String? note,
     super.deleted,
     super.lastModified,
-  }) : _phoneNumber = phoneNumber,
+  }) : _phoneNumberId = phoneNumberId,
+       _phoneNumber = phoneNumber,
        _audioFileName = audioFileName,
        _textTranscription = textTranscription,
        _note = note;
@@ -58,16 +63,18 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
       startTime: startTime,
       duration: duration,
       phoneNumber: phoneNumber,
+      phoneNumberId: phoneNumber?.id,
       audioFileName: audioFileName,
       textTranscription: textTranscription,
       note: note,
     );
-    record.deal ??= record._newDealFromThis();
+    record.deal ??= record._createDealFromThis();
     record.deal!.addRecord(record); // здесь происходит обновление _lastModified у Deal
     return record;
   }
 
-  Deal _newDealFromThis() => Deal(
+  // При ручном создании первой записи - создаем дело на основе полей записи
+  Deal _createDealFromThis() => Deal(
     id: id,
     created: startTime,
     lastModified: startTime,
@@ -79,6 +86,19 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
         ? 'исходящий\n${phoneNumber!.formattedNumber}'
         : startTime.toString(),
   );
+
+  // Нормализуем ссылку на номер телефона при десериализации или ручном создании записи
+  void normalizePhoneNumber(SyncableMap<PhoneNumber> phoneBook) {
+    // восстановление ссылки после десериализации
+    if (_phoneNumber == null && _phoneNumberId != null) {
+      _phoneNumber = phoneBook.getById(_phoneNumberId!);
+
+      // ручное создание из диалера
+    } else if (_phoneNumber != null) {
+      _phoneNumber = phoneBook.merge(_phoneNumber!);
+      _phoneNumberId = _phoneNumber!.id;
+    }
+  }
 
   PhoneNumber? get phoneNumber => _phoneNumber;
 

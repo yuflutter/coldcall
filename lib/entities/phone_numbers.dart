@@ -31,7 +31,7 @@ class PhoneNumber extends Syncable with PhoneNumberMappable {
   @override
   void mergeFrom(covariant PhoneNumber other) {
     super.mergeFrom(other);
-    _name = other.name;
+    _name = other.name ?? _name;
   }
 }
 

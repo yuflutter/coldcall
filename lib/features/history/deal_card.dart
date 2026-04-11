@@ -84,7 +84,7 @@ class _DealCardState extends State<DealCard> {
                                           controller: _titleEditController,
                                           autofocus: true,
                                           maxLines: 3,
-                                          textInputAction: TextInputAction.done,
+                                          // textInputAction: TextInputAction.done,
                                           onSubmitted: _saveEditing,
                                         ),
                                     ],
@@ -93,7 +93,6 @@ class _DealCardState extends State<DealCard> {
                                 if (!_isEditing)
                                   PopupMenuButton(
                                     itemBuilder: (context) => [
-                                      // PopupMenuItem(onTap: () => _model.expandCollapseDeal(_deal), child: Text('Детали...')),
                                       PopupMenuItem(
                                         onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
                                         child: Text('Позвонить'),
@@ -103,8 +102,10 @@ class _DealCardState extends State<DealCard> {
                                       PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                     ],
                                   )
-                                else
+                                else ...[
+                                  IconButton(onPressed: _saveEditing, icon: Icon(Icons.save)),
                                   IconButton(onPressed: _cancelEditing, icon: Icon(Icons.cancel)),
+                                ],
                               ],
                             ),
                             Padding(
@@ -175,10 +176,11 @@ class _DealCardState extends State<DealCard> {
     setState(() => _isEditing = false);
   }
 
-  void _saveEditing(String title) async {
+  void _saveEditing([String? title]) async {
+    title ??= _titleEditController.text;
     _deal.updateTitle(title);
     setState(() => _isEditing = false);
-    await _storage.updateDeal(_deal);
+    await _storage.addOrUpdateAndSaveDeal(_deal);
   }
 
   void _deleteDeal(Deal deal) {

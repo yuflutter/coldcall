@@ -68,6 +68,6 @@ class DialerVm with SimpleChangeNotifier {
       phoneNumber: PhoneNumber.fromRaw(rawNumber: phone),
     );
 
-    await di<Storage>().updateDeal(record.deal!);
+    await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
   }
 }

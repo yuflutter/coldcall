@@ -111,3 +111,46 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     }
   }
 }
+
+// -----------------------------------------------------------------------------------
+
+// Словарь синхронизируемых объектов. Класс сделан с двумя целями:
+// 1) запретить прямое добавление/изменение значений без merge
+// 2) не дублировать алгоритм merge
+@MappableClass()
+class SyncableMap<T extends Syncable> with SyncableListMappable {
+  final Map<String, T> _items;
+
+  SyncableMap([final Map<String, T>? items]) : _items = items ?? {};
+
+  // Сортируем на лету и возвращаем итератор значений. Предполагается что тут меньше записей будет, чем в SyncableList
+  Iterable<T> get items => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
+  int get length => _items.length;
+
+  T? getById(String id) => _items[id];
+
+  void remove(T item) => _items.remove(item.id);
+
+  T merge(T other) {
+    // ищем запись по ID
+    var it = _items[other.id];
+
+    // добавляем новую запись
+    if (it == null) {
+      _items[other.id] = other;
+      return other;
+    }
+
+    // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
+    if (it != null) {
+      if (it.isNewer(other)) {
+        it.mergeFrom(other);
+        return it;
+      } else {
+        other.mergeFrom(it);
+        _items[it.id] = other;
+        return other;
+      }
+    }
+  }
+}
