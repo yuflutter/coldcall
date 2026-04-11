@@ -25,8 +25,7 @@ class Deal extends Syncable with DealMappable {
     super.lastModified,
   }) : _title = title,
        _records = records ?? SyncableList<HistoryRecord>() {
-    // восстанавливаем ссылку, обрубленную сериализатором
-    //TODO: здесь неявное поведение, подумать как улучшить
+    // Восстанавливаем ссылку, обрубленную сериализатором TODO: здесь неявное поведение, подумать как улучшить
     for (var r in _records.items) {
       r.deal = this;
     }
@@ -36,7 +35,6 @@ class Deal extends Syncable with DealMappable {
   void updateTitle(String title) => update(() => _title = title);
 
   Iterable<HistoryRecord> get records => _records.items;
-
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
     update(() => _records.insert(record), raw: raw);

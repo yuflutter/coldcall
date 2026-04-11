@@ -43,6 +43,7 @@ abstract class Syncable {
   }
 
   /// Используется стратегия Last Write Wins для всех полей
+  /// Смотри реализацию в конкретном потомке!
   @mustBeOverridden
   @mustCallSuper
   void mergeFrom(Syncable other) {
