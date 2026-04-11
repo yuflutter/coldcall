@@ -95,7 +95,12 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
 
       // ручное создание из диалера
     } else if (_phoneNumber != null) {
-      _phoneNumber = phoneBook.merge(_phoneNumber!);
+      final phone = phoneBook.getById(_phoneNumber!.id);
+      if (phone == null) {
+        phoneBook.add(_phoneNumber!);
+      } else {
+        phone.mergeFrom(_phoneNumber!);
+      }
       _phoneNumberId = _phoneNumber!.id;
     }
   }

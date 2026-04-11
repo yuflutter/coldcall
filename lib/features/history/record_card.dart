@@ -140,6 +140,7 @@ class _RecordCardState extends State<RecordCard> {
                                     itemBuilder: (context) => [
                                       PopupMenuItem(onTap: _startNoteEditing, child: Text('Добавить примечание к звонку')),
                                       PopupMenuItem(onTap: _startNameEditing, child: Text('Редактировать имя контакта')),
+                                      PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                     ],
                                   ),
                                 )
