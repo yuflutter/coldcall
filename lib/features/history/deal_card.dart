@@ -3,7 +3,7 @@ import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
-import 'package:coldcall/features/user_session/user_session_vm.dart';
+import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
