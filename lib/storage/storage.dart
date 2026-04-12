@@ -7,6 +7,7 @@ import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
+import 'package:coldcall/entities/storage_bundle.dart';
 import 'package:coldcall/entities/syncable.dart';
 import 'package:coldcall/entities/sync_status.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,24 +15,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// TODO: Перенести хранение из файла в локальную СУБД, когда нибудь, может быть.
 class Storage with SimpleChangeNotifier {
+  static const _lastSyncStatusStorageKey = 'lastSyncStatus';
+  static const _storageFileName = 'storage.json';
+
   var _deals = SyncableList<Deal>();
   // для интерфейса
-  Iterable<Deal> get deals => _deals.items;
+  Iterable<Deal> get deals => _deals.notDeleted;
   // для синхронизатора
   Iterable<Deal> notSyncedDeals(DateTime? lastSyncTime) =>
-      _deals.items.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
+      _deals.notDeleted.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   var _phoneBook = SyncableMap<PhoneNumber>();
   // для интерфейса
-  Iterable<PhoneNumber> get phoneBook => _phoneBook.items;
+  Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
   // для синхронизатора
   Iterable<PhoneNumber> notSyncedPhoneBook(DateTime? lastSyncTime) =>
-      _phoneBook.items.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
+      _phoneBook.notDeletedAndSorted.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
   SyncStatus get lastSyncStatus => _lastSyncStatus;
-  static const _lastSyncStatusStorageKey = 'lastSyncStatus';
 
   late String _storageFilePath;
   late final _log = Log('$runtimeType');
@@ -49,14 +52,16 @@ class Storage with SimpleChangeNotifier {
       notifyListeners();
 
       final dir = await getApplicationDocumentsDirectory();
-      _storageFilePath = '${dir.path}/history_deals.json';
+
+      _storageFilePath = '${dir.path}/$_storageFileName';
 
       final file = File(_storageFilePath);
       if (file.existsSync()) {
         try {
-          final json = await file.readAsString();
-          _deals = SyncableList((jsonDecode(json) as List).map((e) => DealMapper.fromJson(e)).toList());
-          for (final deal in _deals.items) {
+          final bundle = StorageBundleMapper.fromJson(await file.readAsString());
+          _deals = SyncableList(bundle.deals);
+          _phoneBook = SyncableMap.fromList(bundle.phoneBook);
+          for (final deal in _deals.notDeleted) {
             deal.normalizePhoneNumbers(_phoneBook);
           }
           notifyListeners();
@@ -71,6 +76,18 @@ class Storage with SimpleChangeNotifier {
     }
   }
 
+  Future<void> saveAllToStorage() async {
+    try {
+      final bundle = StorageBundle(deals: _deals.all.toList(), phoneBook: _phoneBook.all.toList());
+      final file = File(_storageFilePath);
+      final json = bundle.toJson();
+      Log.deb(json);
+      await file.writeAsString(json);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
+  }
+
   /// Вызывается сервисом синхронизации после успешного завершения обмена.
   Future<void> updateLastSyncStatus(SyncStatus status) async {
     try {
@@ -78,16 +95,6 @@ class Storage with SimpleChangeNotifier {
       notifyListeners();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
-    } catch (e, s) {
-      Err.add(e, s);
-    }
-  }
-
-  Future<void> saveAllToStorage() async {
-    try {
-      final json = jsonEncode(deals.map((e) => e.toJson()).toList());
-      final file = File(_storageFilePath);
-      await file.writeAsString(json);
     } catch (e, s) {
       Err.add(e, s);
     }

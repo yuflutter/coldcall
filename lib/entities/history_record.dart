@@ -100,6 +100,7 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
         phoneBook.add(_phoneNumber!);
       } else {
         phone.mergeFrom(_phoneNumber!);
+        _phoneNumber = phone;
       }
       _phoneNumberId = _phoneNumber!.id;
     }

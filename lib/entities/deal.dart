@@ -26,14 +26,14 @@ class Deal extends Syncable with DealMappable {
   }) : _title = title,
        _records = records ?? SyncableList<HistoryRecord>() {
     // Восстанавливаем ссылку, обрубленную сериализатором TODO: здесь неявное поведение, подумать как улучшить
-    for (var r in _records.items) {
+    for (var r in _records.notDeleted) {
       r.deal = this;
     }
   }
 
   // Нормализуем ссылки на номера телефонов при десериализации или ручном создании записи
   void normalizePhoneNumbers(SyncableMap<PhoneNumber> phoneBook) {
-    for (final record in _records.items) {
+    for (final record in _records.notDeleted) {
       record.normalizePhoneNumber(phoneBook);
     }
   }
@@ -41,7 +41,7 @@ class Deal extends Syncable with DealMappable {
   String get title => _title;
   void updateTitle(String title) => update(() => _title = title);
 
-  Iterable<HistoryRecord> get records => _records.items;
+  Iterable<HistoryRecord> get records => _records.notDeleted;
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
     update(() => _records.insert(record), raw: raw);

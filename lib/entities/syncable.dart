@@ -1,5 +1,5 @@
-import 'package:dart_mappable/dart_mappable.dart';
 import 'package:collection/collection.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
@@ -62,8 +62,9 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 
   SyncableList([final List<T>? items]) : _items = items ?? [];
 
-  // возвращаем итератор, что не так надежно как иммутабельный лист, но более производительно
-  Iterable<T> get items => _items.where((e) => !e.deleted);
+  // возвращаем итераторы, что не так надежно как List.unmodifiable, но более производительно
+  Iterable<T> get all => _items;
+  Iterable<T> get notDeleted => _items.where((e) => !e.deleted);
   int get length => _items.length;
 
   // поскольку список упорядоченный - запрещаем простое добавление, только вставка в нужное место по дате
@@ -117,14 +118,22 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 // Словарь синхронизируемых объектов. Класс сделан с двумя целями:
 // 1) запретить прямое добавление/изменение значений без merge
 // 2) не дублировать алгоритм merge
-@MappableClass()
-class SyncableMap<T extends Syncable> with SyncableListMappable {
+class SyncableMap<T extends Syncable> {
   final Map<String, T> _items;
 
   SyncableMap([final Map<String, T>? items]) : _items = items ?? {};
 
+  factory SyncableMap.fromList(List<T> values) {
+    final res = SyncableMap<T>();
+    for (final value in values) {
+      res.add(value);
+    }
+    return res;
+  }
+
   // Сортируем на лету и возвращаем итератор значений. Предполагается что тут меньше записей будет, чем в SyncableList
-  Iterable<T> get items => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
+  Iterable<T> get all => _items.values;
+  Iterable<T> get notDeletedAndSorted => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
   int get length => _items.length;
 
   T? getById(String id) => _items[id];

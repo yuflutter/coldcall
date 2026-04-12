@@ -6,24 +6,22 @@ import 'package:flutter/services.dart';
 
 part 'phone_numbers.mapper.dart';
 
+// В качестве id используется cleanNumber, то есть номер, очищенный от разделителей и с заменой 8 на +7
 @MappableClass()
 class PhoneNumber extends Syncable with PhoneNumberMappable {
-  late final String cleanNumber; // используется в качестве уникального ключа
   late final String formattedNumber; // отображение в интерфейсе в соотв. с текущими настройками
   String? _name;
 
   @MappableConstructor()
-  PhoneNumber({required this.cleanNumber, required this.formattedNumber, String? name}) : _name = name, super(id: cleanNumber);
+  PhoneNumber({required super.id, required this.formattedNumber, String? name}) : _name = name;
 
-  PhoneNumber.fromRaw({required String rawNumber}) {
-    final conf = di<AppConfig>();
-    cleanNumber = conf.cleanPhoneNumber(rawNumber);
-    formattedNumber = conf.phoneNumberFormatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: cleanNumber)).text;
+  PhoneNumber.fromRaw({required String rawNumber}) : super(id: di<AppConfig>().cleanPhoneNumber(rawNumber)) {
+    formattedNumber = di<AppConfig>().phoneNumberFormatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: id)).text;
   }
 
-  PhoneNumber.fromDetected({required DetectedPhoneNumber detected})
-    : cleanNumber = detected.cleanNumber,
-      formattedNumber = detected.formattedNumber;
+  PhoneNumber.fromDetected({required DetectedPhoneNumber detected}) : formattedNumber = detected.formattedNumber, super(id: detected.id);
+
+  String get cleanNumber => id;
 
   String? get name => _name;
   void updateName(String name) => update(() => _name = name);
@@ -42,7 +40,7 @@ class DetectedPhoneNumber extends PhoneNumber {
 
   DetectedPhoneNumber({required this.rawNumber, required this.boundingBox}) : super.fromRaw(rawNumber: rawNumber);
 
-  bool get isPhoneNumber => di<AppConfig>().isPhoneNumber(cleanNumber);
+  bool get isPhoneNumber => di<AppConfig>().isPhoneNumber(id);
 
   @override
   void mergeFrom(covariant DetectedPhoneNumber other) => super.mergeFrom(other);

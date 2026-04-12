@@ -48,6 +48,14 @@ class HistoryRecordMapper extends ClassMapperBase<HistoryRecord> {
     _$_phoneNumber,
     key: r'phoneNumber',
     opt: true,
+    hook: NullMappableFieldHook(),
+  );
+  static String? _$_phoneNumberId(HistoryRecord v) => v._phoneNumberId;
+  static const Field<HistoryRecord, String> _f$_phoneNumberId = Field(
+    '_phoneNumberId',
+    _$_phoneNumberId,
+    key: r'phoneNumberId',
+    opt: true,
   );
   static String? _$_audioFileName(HistoryRecord v) => v._audioFileName;
   static const Field<HistoryRecord, String> _f$_audioFileName = Field(
@@ -90,6 +98,7 @@ class HistoryRecordMapper extends ClassMapperBase<HistoryRecord> {
     #startTime: _f$startTime,
     #duration: _f$duration,
     #_phoneNumber: _f$_phoneNumber,
+    #_phoneNumberId: _f$_phoneNumberId,
     #_audioFileName: _f$_audioFileName,
     #_textTranscription: _f$_textTranscription,
     #_note: _f$_note,
@@ -104,6 +113,7 @@ class HistoryRecordMapper extends ClassMapperBase<HistoryRecord> {
       startTime: data.dec(_f$startTime),
       duration: data.dec(_f$duration),
       phoneNumber: data.dec(_f$_phoneNumber),
+      phoneNumberId: data.dec(_f$_phoneNumberId),
       audioFileName: data.dec(_f$_audioFileName),
       textTranscription: data.dec(_f$_textTranscription),
       note: data.dec(_f$_note),
@@ -182,6 +192,7 @@ abstract class HistoryRecordCopyWith<$R, $In extends HistoryRecord, $Out>
     DateTime? startTime,
     Duration? duration,
     PhoneNumber? phoneNumber,
+    String? phoneNumberId,
     String? audioFileName,
     String? textTranscription,
     String? note,
@@ -212,6 +223,7 @@ class _HistoryRecordCopyWithImpl<$R, $Out>
     DateTime? startTime,
     Duration? duration,
     Object? phoneNumber = $none,
+    Object? phoneNumberId = $none,
     Object? audioFileName = $none,
     Object? textTranscription = $none,
     Object? note = $none,
@@ -224,6 +236,7 @@ class _HistoryRecordCopyWithImpl<$R, $Out>
       if (startTime != null) #startTime: startTime,
       if (duration != null) #duration: duration,
       if (phoneNumber != $none) #phoneNumber: phoneNumber,
+      if (phoneNumberId != $none) #phoneNumberId: phoneNumberId,
       if (audioFileName != $none) #audioFileName: audioFileName,
       if (textTranscription != $none) #textTranscription: textTranscription,
       if (note != $none) #note: note,
@@ -238,6 +251,7 @@ class _HistoryRecordCopyWithImpl<$R, $Out>
     startTime: data.get(#startTime, or: $value.startTime),
     duration: data.get(#duration, or: $value.duration),
     phoneNumber: data.get(#phoneNumber, or: $value._phoneNumber),
+    phoneNumberId: data.get(#phoneNumberId, or: $value._phoneNumberId),
     audioFileName: data.get(#audioFileName, or: $value._audioFileName),
     textTranscription: data.get(
       #textTranscription,
