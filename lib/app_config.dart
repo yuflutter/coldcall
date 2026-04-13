@@ -67,8 +67,8 @@ Future<void> initApp() async {
   // Только файлы, лежащие в корне, включается в итоговую сборку!
 
   // DI.put(RecognizerServiceVosk());
-  DI.put(RecognizerServiceSherpaSync());
-  // DI.put(RecognizerServiceSherpaIsolate());
+  // DI.put(RecognizerServiceSherpaSync());
+  DI.put(RecognizerServiceSherpaIsolate());
 
   // Вьюмодель храним глобально, чтобы запись продолжалась при навигации по экранам
   DI.put(RecorderRecognizerVmImpl());
