@@ -1,5 +1,4 @@
 import 'package:coldcall/core/di.dart';
-import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
@@ -7,6 +6,7 @@ import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class RecordCard extends StatefulWidget {
   final HistoryRecord record;
@@ -78,6 +78,13 @@ class _RecordCardState extends State<RecordCard> {
 
   void _call(HistoryRecord record) {
     _model.showDialer(context, deal: record.deal!, phoneNumber: record.phoneNumber);
+  }
+
+  void _aiQuery() {
+    final url =
+        'https://www.google.com/search?sourceid=chrome&aep=42&udm=50&q=' +
+        Uri.encodeComponent('Перескажи очень кратко этот текст:\n' + widget.record.textTranscription!);
+    launchUrlString(url, mode: .externalApplication);
   }
 
   @override
@@ -187,15 +194,14 @@ class _RecordCardState extends State<RecordCard> {
 
                             if (_record.phoneNumber != null)
                               if (!_isNoteEditing && !_isNameEditing)
-                                SizedBox(
-                                  height: 40,
-                                  child: PopupMenuButton(
-                                    itemBuilder: (context) => [
-                                      PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
-                                      PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
-                                      PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
-                                    ],
-                                  ),
+                                PopupMenuButton(
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
+                                    PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
+                                    if (_record.audioFileName != null)
+                                      PopupMenuItem(onTap: () => _model.downloadAudio(widget.record), child: Text('Скачать аудиофайл')),
+                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                                  ],
                                 )
                               else ...[
                                 IconButton(onPressed: _stopAllEditing, icon: Icon(Icons.cancel)),
@@ -294,8 +300,7 @@ class _RecordCardState extends State<RecordCard> {
                                 PopupMenuButton(
                                   itemBuilder: (context) => [
                                     PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
-                                    // PopupMenuItem(onTap: () => _model.improveTranscription(record), child: Text('Улучшить расшифровку')),
-                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, record), child: Text('Удалить')),
+                                    PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
                                   ],
                                 ),
                               ],

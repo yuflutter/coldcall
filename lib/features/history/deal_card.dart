@@ -1,5 +1,4 @@
 import 'package:coldcall/core/di.dart';
-import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/record_card.dart';
@@ -192,7 +191,7 @@ class _DealCardState extends State<DealCard> {
     title ??= _titleEditController.text;
     _deal.updateTitle(title.trim());
     setState(() => _isEditing = false);
-    _model.collapseDealCard();
+    if (_model.currentExpandedDealId != widget.deal.id) _model.collapseDealCard();
     await _storage.addOrUpdateAndSaveDeal(_deal);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_model.scroller.hasClients) {
