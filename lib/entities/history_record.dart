@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:coldcall/core/dart_mappable_settings.dart';
@@ -79,9 +80,7 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
     created: startTime,
     lastModified: startTime,
     title: (textTranscription != null)
-        ? (textTranscription!.length <= 150)
-              ? textTranscription!
-              : '${textTranscription!.substring(0, 150)}...'
+        ? 'аудиозапись\n${textTranscription!.substring(0, min(100, textTranscription!.length))}...'
         : (phoneNumber != null)
         ? 'исходящий\n${phoneNumber!.formattedNumber}'
         : startTime.toString(),

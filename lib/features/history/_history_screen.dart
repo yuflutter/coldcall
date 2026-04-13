@@ -58,6 +58,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             RefreshIndicator(
                               onRefresh: _storage.init,
                               child: ListView.builder(
+                                controller: _model.scroller,
                                 itemCount: deals.length,
                                 reverse: true,
                                 itemBuilder: (context, index) {

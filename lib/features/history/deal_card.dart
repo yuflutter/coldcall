@@ -192,8 +192,13 @@ class _DealCardState extends State<DealCard> {
     title ??= _titleEditController.text;
     _deal.updateTitle(title.trim());
     setState(() => _isEditing = false);
+    _model.collapseDealCard();
     await _storage.addOrUpdateAndSaveDeal(_deal);
-    if (context.mounted) showToastification(context, 'Изменения сохранены');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_model.scroller.hasClients) {
+        _model.scroller.jumpTo(0.0);
+      }
+    });
   }
 
   void _deleteDeal(Deal deal) {

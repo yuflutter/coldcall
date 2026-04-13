@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 /// Команды для общения с изолятом
 enum _IsolateCommand { init, start, accept, flush, stop }
 
-/// Неудачная попытка перевести инференс модели в изолят. Работает еще медленнее, чем синхронная версия.
+/// Попытка перевести инференс модели в изолят. Ускорения не заметил. Но хоть интерфейс не фризит.
 class RecognizerServiceSherpaIsolate extends RecognizerServiceSherpa {
   Isolate? _isolate;
 
@@ -30,8 +30,6 @@ class RecognizerServiceSherpaIsolate extends RecognizerServiceSherpa {
   Future<void> init() async {
     if (_isolate != null) return;
 
-    // ВАЖНО: copyAssetsToDocuments должен быть доступен или путь передан извне
-    // Для примера считаем, что пути те же
     final modelPath = await copyAssetsToDocuments();
 
     // Запускаем изолят

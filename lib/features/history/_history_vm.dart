@@ -20,6 +20,10 @@ class HistoryVm with SimpleChangeNotifier {
     notify(() => _currentExpandedDeal = (_currentExpandedDeal != deal || forceExpand) ? deal : null);
   }
 
+  void collapseDealCard() => notify(() => _currentExpandedDeal = null);
+
+  final scroller = ScrollController();
+
   // аудиоплеер
   _AudioSession? _audioSession;
   String? get currentPlayingRecordId => _audioSession?.currentPlayingRecord.id;

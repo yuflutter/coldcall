@@ -35,9 +35,13 @@ class _RecordCardState extends State<RecordCard> {
   void _saveNoteEditing([String? note]) async {
     note ??= _noteEditController.text;
     _record.updateNote(note.trim());
+    _stopAllEditing();
     await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-    if (context.mounted) showToastification(context, 'Изменения сохранены');
-    _cancelAllEditing();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_model.scroller.hasClients) {
+        _model.scroller.jumpTo(0.0);
+      }
+    });
   }
 
   var _isNameEditing = false;
@@ -50,12 +54,11 @@ class _RecordCardState extends State<RecordCard> {
   void _saveNameEditing([String? name]) async {
     name ??= _nameEditController.text;
     _record.phoneNumber?.updateName(name.trim());
+    _stopAllEditing();
     await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-    if (context.mounted) showToastification(context, 'Изменения сохранены');
-    _cancelAllEditing();
   }
 
-  void _cancelAllEditing() {
+  void _stopAllEditing() {
     _noteEditController.text = _record.note ?? '';
     _nameEditController.text = _record.phoneNumber?.name ?? '';
     setState(() {
@@ -90,7 +93,7 @@ class _RecordCardState extends State<RecordCard> {
             return PopScope(
               canPop: !_isNoteEditing,
               onPopInvokedWithResult: (didPop, result) {
-                if (!didPop) _cancelAllEditing();
+                if (!didPop) _stopAllEditing();
               },
               child: Card(
                 margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
@@ -195,7 +198,7 @@ class _RecordCardState extends State<RecordCard> {
                                   ),
                                 )
                               else ...[
-                                IconButton(onPressed: _cancelAllEditing, icon: Icon(Icons.cancel)),
+                                IconButton(onPressed: _stopAllEditing, icon: Icon(Icons.cancel)),
                                 if (_isNoteEditing)
                                   IconButton(onPressed: _saveNoteEditing, icon: Icon(Icons.save))
                                 else if (_isNameEditing)
