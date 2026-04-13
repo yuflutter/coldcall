@@ -4,10 +4,13 @@
 - tokens.txt
 
 Реализация на базе GigaAM v2 (Sber/NeMo CTC) + Silero VAD.
+
 Модели (~228 MB суммарно):
-    assets/giga-am-v2/model.int8.onnx  — скачать из:
+    - model.int8.onnx  — скачать из:
     https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-ctc-giga-am-v2-russian-2025-04-19.tar.bz2
-    assets/giga-am-v2/tokens.txt       — из того же архива
-    assets/giga-am-v2/silero_vad.onnx  — скачать из:
+    
+    - tokens.txt       — из того же архива
+
+    - silero_vad.onnx  — скачать из:
     https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx
 
