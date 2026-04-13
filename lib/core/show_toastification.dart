@@ -9,7 +9,7 @@ void showToastification(BuildContext context, String message) {
   entry = OverlayEntry(
     builder: (context) => Positioned(
       // Учитываем челку (SafeArea) + небольшой отступ
-      top: MediaQuery.of(context).padding.top + 20,
+      top: MediaQuery.of(context).padding.top + 25,
       right: 10,
       // Ограничиваем ширину, чтобы не вылезало за экран
       child: Container(

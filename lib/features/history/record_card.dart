@@ -173,7 +173,7 @@ class _RecordCardState extends State<RecordCard> {
 
                         Column(
                           children: [
-                            if (_record.audioFileName != null) ...[
+                            if (_record.audioFileName != null)
                               IconButton(
                                 padding: .zero,
                                 icon: (isAudioPlaying)
@@ -181,7 +181,6 @@ class _RecordCardState extends State<RecordCard> {
                                     : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
                                 onPressed: () => _model.startStopAudio(context, _record),
                               ),
-                            ],
 
                             if (_record.phoneNumber != null)
                               if (!_isNoteEditing && !_isNameEditing)

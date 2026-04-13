@@ -4,7 +4,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 
 part 'storage_bundle.mapper.dart';
 
-// Данные хранятся на диске и отправляются для синхронизации единым json
+// Все данные приложения хранятся на диске, а также частично отправляются при синхронизации - единым json
 @MappableClass()
 class StorageBundle with StorageBundleMappable {
   final List<Deal> deals;

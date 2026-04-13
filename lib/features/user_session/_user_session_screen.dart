@@ -2,7 +2,6 @@ import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:coldcall/features/user_session/app_description.dart';
-import 'package:coldcall/widgets/contact_author_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -81,10 +80,10 @@ class UserSessionScreen extends StatelessWidget {
   //   );
   // }
 
-  Widget _buildInfoTile({required String title, required dynamic subtitle}) {
-    return ListTile(
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      subtitle: (subtitle is Widget) ? subtitle : Text(subtitle, style: TextStyle(color: Colors.grey[400])),
-    );
-  }
+  // Widget _buildInfoTile({required String title, required dynamic subtitle}) {
+  //   return ListTile(
+  //     title: Text(title, style: const TextStyle(color: Colors.white)),
+  //     subtitle: (subtitle is Widget) ? subtitle : Text(subtitle, style: TextStyle(color: Colors.grey[400])),
+  //   );
+  // }
 }

@@ -19,18 +19,10 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  // для интерфейса
   Iterable<Deal> get deals => _deals.notDeleted;
-  // для синхронизатора
-  Iterable<Deal> notSyncedDeals(DateTime? lastSyncTime) =>
-      _deals.notDeleted.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   var _phoneBook = SyncableMap<PhoneNumber>();
-  // для интерфейса
   Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
-  // для синхронизатора
-  Iterable<PhoneNumber> notSyncedPhoneBook(DateTime? lastSyncTime) =>
-      _phoneBook.notDeletedAndSorted.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime));
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
@@ -123,16 +115,6 @@ class Storage with SimpleChangeNotifier {
     }
   }
 
-  // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
-  // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
-  void mergeAndSaveDeal(Deal other) {
-    other.normalizePhoneNumbers(_phoneBook);
-    _deals.merge(
-      other,
-      (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
-    );
-  }
-
   Future<void> deleteHistoryRecord(HistoryRecord record) async {
     // Файлы пока не удаляем, может сделать режим восстановления из корзины?
     // if (record.audioFilePath != null) {
@@ -160,5 +142,25 @@ class Storage with SimpleChangeNotifier {
     deal.markDeleted();
     notifyListeners();
     await saveAllToStorage();
+  }
+
+  // Возвращает данные, измененные после даты последней синхронизации, хранящейся на другом устройстве
+  StorageBundle getNotSyncedBundle(DateTime? lastSyncTime) => StorageBundle(
+    deals: _deals.all.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime)).toList(),
+    phoneBook: _phoneBook.all.where((e) => lastSyncTime == null || e.lastModified.isAfter(lastSyncTime)).toList(),
+  );
+
+  // Ищем дело с приблизительно совпадающими интервалами первой записи, и объединяем два в одно
+  // Сами записи объединяем или нет - будет решено в Deal.mergeFrom()
+  void mergeAndSaveDeal(Deal other) {
+    other.normalizePhoneNumbers(_phoneBook);
+    _deals.merge(
+      other,
+      (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
+    );
+  }
+
+  void mergeAndSavePhoneNumber(PhoneNumber otherPhone) {
+    _phoneBook.merge(otherPhone);
   }
 }

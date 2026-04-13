@@ -145,26 +145,26 @@ class SyncableMap<T extends Syncable> {
 
   void remove(T item) => _items.remove(item.id);
 
-  // T merge(T other) {
-  //   // ищем запись по ID
-  //   var it = _items[other.id];
+  T merge(T other) {
+    // ищем запись по ID
+    var it = _items[other.id];
 
-  //   // добавляем новую запись
-  //   if (it == null) {
-  //     _items[other.id] = other;
-  //     return other;
-  //   }
+    // добавляем новую запись
+    if (it == null) {
+      _items[other.id] = other;
+      return other;
+    }
 
-  //   // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
-  //   if (it != null) {
-  //     if (it.isNewer(other)) {
-  //       it.mergeFrom(other);
-  //       return it;
-  //     } else {
-  //       other.mergeFrom(it);
-  //       _items[it.id] = other;
-  //       return other;
-  //     }
-  //   }
-  // }
+    // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
+    if (it != null) {
+      if (it.isNewer(other)) {
+        it.mergeFrom(other);
+        return it;
+      } else {
+        other.mergeFrom(it);
+        _items[it.id] = other;
+        return other;
+      }
+    }
+  }
 }

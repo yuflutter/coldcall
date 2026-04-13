@@ -6,7 +6,7 @@ import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
-import 'package:coldcall/entities/deal.dart';
+import 'package:coldcall/entities/storage_bundle.dart';
 import 'package:coldcall/entities/sync_status.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:network_info_plus/network_info_plus.dart';
@@ -187,14 +187,14 @@ class HistorySyncVm with SimpleChangeNotifier {
           final remotLastSyncTime = DateTime.fromMillisecondsSinceEpoch(jsonDecode(incoming));
           notify(() => stage = .jsonSwap);
 
-          _wsSend(jsonEncode(di<Storage>().notSyncedDeals(remotLastSyncTime).toList()));
+          _wsSend(di<Storage>().getNotSyncedBundle(remotLastSyncTime).toJson());
 
         // принимаем json, отправляем список имен фойлов, в ответ ожидаем того же
         case .jsonSwap:
-          final deals = (jsonDecode(incoming) as List).map((e) => DealMapper.fromJson(e)).toList();
+          final remoteBundle = StorageBundleMapper.fromJson(incoming);
           notify(() => stage = .missingFileNamesSwap);
 
-          _missingFileNames = await _processIncomingJson(deals);
+          _missingFileNames = await _processIncomingJson(remoteBundle);
           _wsSend(jsonEncode(_missingFileNames));
 
         // принимаем список путей к файлам, отправляем сами файлы, в ответ ожидаем того же
@@ -235,12 +235,18 @@ class HistorySyncVm with SimpleChangeNotifier {
     }
   }
 
-  Future<List<String>> _processIncomingJson(List<Deal> remoteDeals) async {
+  // Принимаем пакет измененных данных, делаем merge адресной книги, дел, и записей истории
+  Future<List<String>> _processIncomingJson(StorageBundle remoteBundle) async {
     final storage = di<Storage>();
-    final missingFileNames = <String>[];
 
-    for (final remoteDeal in remoteDeals) {
-      // формируем список имен файлов, ссылки на которые есть, а самих файлов нет
+    // синхронизируем телефонную книгу
+    for (final remotePhoneNumber in remoteBundle.phoneBook) {
+      storage.mergeAndSavePhoneNumber(remotePhoneNumber);
+    }
+
+    // формируем список имен файлов, ссылки на которые есть, а самих файлов нет
+    final missingFileNames = <String>[];
+    for (final remoteDeal in remoteBundle.deals) {
       if (!remoteDeal.deleted) {
         for (final remoteRecord in remoteDeal.records) {
           if (remoteRecord.audioFileName != null) {
@@ -251,8 +257,10 @@ class HistorySyncVm with SimpleChangeNotifier {
         }
       }
 
+      // синхронизируем дело (включая записи истории)
       storage.mergeAndSaveDeal(remoteDeal);
     }
+
     await storage.saveAllToStorage();
     storage.notifyListeners();
 
