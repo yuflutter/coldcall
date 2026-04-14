@@ -215,7 +215,7 @@ class CameraDialerVm with SimpleChangeNotifier {
   void _deleteFrameFile(String? framePath) async {
     if (framePath == null) return;
     try {
-      await File(frozenFramePath!).delete();
+      await File(framePath).delete();
     } catch (e) {
       _log.war('Error deleting frozen frame: $e');
     }

@@ -114,7 +114,7 @@ class _CameraDialerScreenState extends State<CameraDialerScreen> with SingleTick
                                   ),
                                   if (_model.selectedPhones.isNotEmpty)
                                     Text(
-                                      'Выбрано в кадрах: ${_model.selectedPhones.length}',
+                                      'кадров: ${_model.selectedPhones.length}',
                                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                                     ),
                                 ],
