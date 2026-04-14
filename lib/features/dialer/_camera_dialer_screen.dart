@@ -105,9 +105,19 @@ class _CameraDialerScreenState extends State<CameraDialerScreen> with SingleTick
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                               decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
-                              child: Text(
-                                'Найдено номеров: ${_model.detectedPhones.length}',
-                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              child: Column(
+                                mainAxisSize: .min,
+                                children: [
+                                  Text(
+                                    'Найдено номеров: ${_model.detectedPhones.length}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  if (_model.selectedPhones.isNotEmpty)
+                                    Text(
+                                      'Выбрано в кадрах: ${_model.selectedPhones.length}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                ],
                               ),
                             ),
                           ),

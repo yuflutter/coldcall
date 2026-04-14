@@ -113,7 +113,7 @@ class _RecordCardState extends State<RecordCard> {
                       : null,
                   onLongPress: () => _showDeleteRecordDialog(context, _record),
                   child: Padding(
-                    padding: .fromLTRB(10, 0, 0, 7),
+                    padding: .fromLTRB(10, 0, 0, 4),
                     child: Row(
                       crossAxisAlignment: .start,
                       children: [
@@ -143,8 +143,8 @@ class _RecordCardState extends State<RecordCard> {
                                     ],
                                   ),
                                 ),
-
-                              if (_record.phoneNumber != null) _buildPhoneNumber(_record),
+                              Gap(3),
+                              if (_record.phoneNumber != null) ...[_buildPhoneNumber(_record), Gap(3)],
                               if (_isNameEditing)
                                 TextField(
                                   controller: _nameEditController,
@@ -155,11 +155,13 @@ class _RecordCardState extends State<RecordCard> {
                                   onSubmitted: _saveNameEditing,
                                 ),
 
-                              if (_record.note?.isNotEmpty == true && !_isNoteEditing)
+                              if (_record.note?.isNotEmpty == true && !_isNoteEditing) ...[
                                 Padding(
                                   padding: (_record.phoneNumber?.name?.isNotEmpty == true) ? .fromLTRB(0, 3, 0, 0) : .zero,
                                   child: Text(_record.note!, style: TextStyle(fontSize: 15)),
                                 ),
+                                Gap(3),
+                              ],
                               if (_isNoteEditing)
                                 TextField(
                                   controller: _noteEditController,
@@ -170,13 +172,13 @@ class _RecordCardState extends State<RecordCard> {
                                   onSubmitted: _saveNoteEditing,
                                 ),
 
-                              if (_record.textTranscription != null && _record.phoneNumber != null) Gap(8),
-
-                              if (_record.textTranscription != null)
+                              if (_record.textTranscription != null) ...[
                                 Padding(
                                   padding: .fromLTRB(0, 0, 5, 0),
                                   child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
                                 ),
+                                Gap(3),
+                              ],
                             ],
                           ),
                         ),
@@ -198,8 +200,6 @@ class _RecordCardState extends State<RecordCard> {
                                   itemBuilder: (context) => [
                                     PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
                                     PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
-                                    if (_record.audioFileName != null)
-                                      PopupMenuItem(onTap: () => _model.downloadAudio(widget.record), child: Text('Скачать аудиофайл')),
                                     PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                   ],
                                 )
@@ -301,6 +301,7 @@ class _RecordCardState extends State<RecordCard> {
                                   itemBuilder: (context) => [
                                     PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
                                     PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
+                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                   ],
                                 ),
                               ],

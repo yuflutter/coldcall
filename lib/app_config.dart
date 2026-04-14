@@ -44,7 +44,10 @@ class AppConfig {
   );
 
   /// Частота кадров для процессинга видео
-  final frameProcessingRate = Duration(milliseconds: 300);
+  final frameProcessingRate = Duration(milliseconds: 500);
+
+  /// Количество кадров, по достижению которого мы считаем телефонный номер достоверно распознанным
+  final reliableCountOfFrames = 3;
 
   /// Порт синхронизации двух устройств, находящихся в одной сети WiFi
   final historySyncHttpPort = 8084;

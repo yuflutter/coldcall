@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
@@ -16,8 +17,16 @@ import 'package:permission_handler/permission_handler.dart';
 class CameraDialerVm with SimpleChangeNotifier {
   CameraController? cameraController;
 
+  // все телефоны, обнаруженные в текущем кадре
   List<DetectedPhoneNumber> detectedPhones = [];
+
+  // телефоны, выбранные в последних 3-х кадрах (должны совпадать чтобы открылся диалер)
+  // сделано для надежности, чтобы не было ошибки в цифрах при плохом ракурсе или качестве текста
+  List<DetectedPhoneNumber> selectedPhones = [];
+
+  // Выбранный номер - для отображения в интерфейсе
   DetectedPhoneNumber? selectedPhone;
+
   String? frozenFramePath; // Путь к замороженному кадру
   BuildContext? _context; // нужен для получения размера экрана (используется для работы прицела)
 
@@ -28,6 +37,9 @@ class CameraDialerVm with SimpleChangeNotifier {
   // диалер
   DialerVm? dialerOverlayModel;
   bool get isDialerShown => (dialerOverlayModel != null);
+
+  final _appConfig = di<AppConfig>();
+  late final _log = Log('$runtimeType');
 
   @override
   void dispose() {
@@ -41,7 +53,7 @@ class CameraDialerVm with SimpleChangeNotifier {
       try {
         File(frozenFramePath!).deleteSync();
       } catch (e) {
-        print('Error deleting frozen frame on dispose: $e');
+        _log.war('Error deleting frozen frame on dispose: $e');
       }
     }
     super.dispose();
@@ -71,7 +83,7 @@ class CameraDialerVm with SimpleChangeNotifier {
 
   void _startVideoProcessing() {
     _stopVideoProcessing();
-    _videoProcessingTimer = Timer.periodic(di<AppConfig>().frameProcessingRate, (_) => _processFrame());
+    _videoProcessingTimer = Timer.periodic(_appConfig.frameProcessingRate, (_) => _processFrame());
   }
 
   void _stopVideoProcessing() {
@@ -79,7 +91,9 @@ class CameraDialerVm with SimpleChangeNotifier {
   }
 
   Future<void> _processFrame() async {
-    if (_isVideoProcessing || cameraController == null || !cameraController!.value.isInitialized) return;
+    if (isDialerShown || _isVideoProcessing || cameraController == null || !cameraController!.value.isInitialized) {
+      return;
+    }
 
     _isVideoProcessing = true;
     String? tempFramePath;
@@ -87,44 +101,52 @@ class CameraDialerVm with SimpleChangeNotifier {
     try {
       final XFile image = await cameraController!.takePicture();
       tempFramePath = image.path;
-      final InputImage inputImage = InputImage.fromFilePath(image.path);
+      final inputImage = InputImage.fromFilePath(image.path);
 
       final phones = await _phoneDetector.detectPhones(inputImage);
       notify(() => detectedPhones = phones);
 
       await _selectPhone(phones, image.path);
     } catch (e) {
-      print('Error processing frame: $e');
+      _log.war('Error processing frame: $e');
     }
 
     // Удаляем временный файл, если он не используется для отображения
     if (tempFramePath != null && tempFramePath != frozenFramePath) {
-      File(tempFramePath).delete().then((v) => v, onError: (e, _) => print('Error deleting temp frame: $e'));
+      _deleteFrameFile(tempFramePath);
     }
     _isVideoProcessing = false;
   }
 
   Future<void> _selectPhone(List<DetectedPhoneNumber> phones, String framePath) async {
-    if (phones.isEmpty) return notify(() => selectedPhone = null);
-
-    // Если номер только один - выбираем автоматически
-    if (phones.length == 1) {
-      final phone = phones.first;
-      if (selectedPhone?.cleanNumber != phone.cleanNumber) {
-        showDialer(phone: phone, framePath: framePath);
-      }
-
-      // Если номеров несколько - выбираем тот, что попадает в прицел
-    } else {
-      final phone = _getPhoneInCrosshair(phones);
-      if (phone != null && selectedPhone?.cleanNumber != phone.cleanNumber) {
-        showDialer(phone: phone, framePath: framePath);
-
-        // Ни один номер не попал в прицел
-      } else {
-        if (!isDialerShown) notify(() => selectedPhone = null);
-      }
+    if (isDialerShown) {
+      return;
     }
+
+    if (phones.isEmpty) {
+      return notify(() {
+        selectedPhones.clear();
+        selectedPhone = null;
+      });
+    }
+
+    // Если номер в кадре только один - выбираем автоматически, иначе выбираем тот, который попадает в прицел
+    final phone = (phones.length == 1) ? phones.first : _getPhoneInCrosshair(phones);
+
+    // Несовпадение выбранного номера с выбранным в предыдущих кадрах
+    if (phone != null && selectedPhones.isNotEmpty && phone.cleanNumber != selectedPhones.first.cleanNumber) {
+      return notify(() {
+        selectedPhones.clear();
+        selectedPhone = null;
+      });
+    }
+
+    if (phone != null) selectedPhones.add(phone);
+    if (selectedPhones.length < _appConfig.reliableCountOfFrames) {
+      return;
+    }
+
+    showDialer(phone: selectedPhones.first, framePath: framePath);
   }
 
   DetectedPhoneNumber? _getPhoneInCrosshair(List<DetectedPhoneNumber> phones) {
@@ -161,7 +183,7 @@ class CameraDialerVm with SimpleChangeNotifier {
 
     // Удаляем старый замороженный кадр, если он есть
     if (frozenFramePath != null && frozenFramePath != framePath) {
-      File(frozenFramePath!).delete().then((v) => v, onError: (e, _) => print('Error deleting frozen frame: $e'));
+      _deleteFrameFile(frozenFramePath);
     }
 
     notify(() {
@@ -177,17 +199,25 @@ class CameraDialerVm with SimpleChangeNotifier {
     _startVideoProcessing();
 
     // Удаляем замороженный кадр
-    if (frozenFramePath != null) {
-      File(frozenFramePath!).delete().then((v) => v, onError: (e, _) => print('Error deleting frozen frame: $e'));
-    }
+    _deleteFrameFile(frozenFramePath);
 
     notify(() {
       frozenFramePath = null;
+      selectedPhones.clear();
       selectedPhone = null;
       detectedPhones.clear();
       dialerOverlayModel = null;
     });
 
     if (_context!.mounted && isCallEnded) showToastification(_context!, 'Звонок сохранен в историю');
+  }
+
+  void _deleteFrameFile(String? framePath) async {
+    if (framePath == null) return;
+    try {
+      await File(frozenFramePath!).delete();
+    } catch (e) {
+      _log.war('Error deleting frozen frame: $e');
+    }
   }
 }
