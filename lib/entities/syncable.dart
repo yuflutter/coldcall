@@ -42,12 +42,15 @@ abstract class Syncable {
     if (!raw) _lastModified = DateTime.now();
   }
 
-  /// Используется стратегия Last Write Wins для всех полей
+  /// Используется стратегия Last Write Wins для всех полей, предполагается что other новее.
   /// Смотри реализацию в конкретном потомке!
   @mustBeOverridden
   @mustCallSuper
   void mergeFrom(Syncable other) {
     _deleted = other.deleted;
+    if (_lastModified.isBefore(other._lastModified)) {
+      _lastModified = other.lastModified;
+    }
   }
 }
 
@@ -100,7 +103,7 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 
     // обновляем поля в существующей записи, и перепозиционируем ее в упорядоченном списке
     if (it != null) {
-      if (it.isNewer(other)) {
+      if (it.isOlder(other)) {
         it.mergeFrom(other);
         remove(it);
         insert(it);
@@ -157,7 +160,7 @@ class SyncableMap<T extends Syncable> {
 
     // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
     if (it != null) {
-      if (it.isNewer(other)) {
+      if (it.isOlder(other)) {
         it.mergeFrom(other);
         return it;
       } else {
