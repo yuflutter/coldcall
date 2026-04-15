@@ -63,6 +63,7 @@ class Deal extends Syncable with DealMappable {
     _title = other.title;
 
     for (final otherRecord in other.records) {
+      otherRecord.deal = this;
       _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
   }
