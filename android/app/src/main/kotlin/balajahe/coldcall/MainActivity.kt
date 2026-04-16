@@ -1,4 +1,4 @@
-package com.example.coldcall
+package balajahe.coldcall
 
 import io.flutter.embedding.android.FlutterActivity
 
