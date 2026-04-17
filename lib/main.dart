@@ -110,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
         final deal = session.turnToRecordForDeal;
         if (deal != null) {
           _currentIndex = 1;
-          _currentScreen = RecorderRecognizerScreen(deal: deal, startImmediately: true);
+          _currentScreen = RecorderRecognizerScreen(deal: deal); // , startImmediately: true);
         }
         return Scaffold(
           body: _currentScreen,

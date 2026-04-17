@@ -31,6 +31,11 @@ class _DealCardState extends State<DealCard> {
     setState(() => _isTitleEditing = false);
   }
 
+  void _startTitleEditing() {
+    _model.collapseDealCard();
+    setState(() => _isTitleEditing = true);
+  }
+
   void _saveTitleEditing([String? title]) async {
     title ??= _titleEditController.text;
     _deal.updateTitle(title.trim());
@@ -55,13 +60,11 @@ class _DealCardState extends State<DealCard> {
             return Column(
               children: [
                 InkWell(
-                  onTap: () => _model.expandCollapseDealCard(_deal),
-                  onLongPress: () => _showDeleteDealDialog(context, _deal),
+                  onTap: (!_isTitleEditing) ? () => _model.expandCollapseDealCard(_deal) : null,
+                  onLongPress: (!_isTitleEditing) ? () => _showDeleteDealDialog(context, _deal) : null,
                   child: PopScope(
                     canPop: !_isTitleEditing,
-                    onPopInvokedWithResult: (didPop, result) {
-                      if (!didPop) _cancelTitileEditing();
-                    },
+                    onPopInvokedWithResult: (didPop, result) => (!didPop) ? _cancelTitileEditing() : null,
                     child: Card(
                       margin: .fromLTRB(0, 4, 0, 4),
                       color: Colors.white24,
@@ -99,13 +102,18 @@ class _DealCardState extends State<DealCard> {
                                             ),
                                           )
                                         else
-                                          TextField(
-                                            controller: _titleEditController,
-                                            autofocus: true,
-                                            minLines: 2,
-                                            maxLines: 5,
-                                            // textInputAction: TextInputAction.done,
-                                            onSubmitted: _saveTitleEditing,
+                                          GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                                            child: TextField(
+                                              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                                              controller: _titleEditController,
+                                              autofocus: true,
+                                              minLines: 2,
+                                              maxLines: 5,
+                                              // textInputAction: TextInputAction.done,
+                                              onSubmitted: _saveTitleEditing,
+                                            ),
                                           ),
                                       ],
                                     ),
@@ -124,10 +132,7 @@ class _DealCardState extends State<DealCard> {
                                             onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
                                             child: Text('Записать'),
                                           ),
-                                          PopupMenuItem(
-                                            onTap: () => setState(() => _isTitleEditing = true),
-                                            child: Text('Изменить описание'),
-                                          ),
+                                          PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
                                           PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                         ],
                                       )

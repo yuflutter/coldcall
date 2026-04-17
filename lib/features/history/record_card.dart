@@ -146,13 +146,18 @@ class _RecordCardState extends State<RecordCard> {
                               Gap(3),
                               if (_record.phoneNumber != null) ...[_buildPhoneNumber(_record), Gap(3)],
                               if (_isNameEditing)
-                                TextField(
-                                  controller: _nameEditController,
-                                  autofocus: true,
-                                  minLines: 1,
-                                  maxLines: 3,
-                                  // textInputAction: TextInputAction.done,
-                                  onSubmitted: _saveNameEditing,
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                                  child: TextField(
+                                    onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                                    controller: _nameEditController,
+                                    autofocus: true,
+                                    minLines: 1,
+                                    maxLines: 3,
+                                    // textInputAction: TextInputAction.done,
+                                    onSubmitted: _saveNameEditing,
+                                  ),
                                 ),
 
                               if (_record.note?.isNotEmpty == true && !_isNoteEditing) ...[
@@ -163,13 +168,18 @@ class _RecordCardState extends State<RecordCard> {
                                 Gap(3),
                               ],
                               if (_isNoteEditing)
-                                TextField(
-                                  controller: _noteEditController,
-                                  autofocus: true,
-                                  minLines: 1,
-                                  maxLines: 5,
-                                  // textInputAction: TextInputAction.done,
-                                  onSubmitted: _saveNoteEditing,
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                                  child: TextField(
+                                    onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                                    controller: _noteEditController,
+                                    autofocus: true,
+                                    minLines: 1,
+                                    maxLines: 5,
+                                    // textInputAction: TextInputAction.done,
+                                    onSubmitted: _saveNoteEditing,
+                                  ),
                                 ),
 
                               if (_record.textTranscription != null) ...[
