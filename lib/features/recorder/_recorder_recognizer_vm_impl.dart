@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/di.dart';
@@ -125,7 +124,7 @@ class RecorderRecognizerVmImpl extends RecorderRecognizerVm {
         startTime: result.startTime,
         duration: result.duration,
         audioFileName: result.audioFilePath.split('/').last, // для синхронизации важно хранить только имя
-        textTranscription: textTranscription.substring(0, min(textTranscription.length, 500)),
+        textTranscription: textTranscription,
       );
 
       await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
