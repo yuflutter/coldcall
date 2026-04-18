@@ -26,14 +26,15 @@ class _DealCardState extends State<DealCard> {
   var _isTitleEditing = false;
   late final _titleEditController = TextEditingController(text: _deal.title);
 
+  void _startTitleEditing() async {
+    await Scrollable.ensureVisible(context, alignment: 0.2);
+    // _model.collapseDealCard();
+    setState(() => _isTitleEditing = true);
+  }
+
   void _cancelTitileEditing() {
     _titleEditController.text = _deal.title;
     setState(() => _isTitleEditing = false);
-  }
-
-  void _startTitleEditing() {
-    _model.collapseDealCard();
-    setState(() => _isTitleEditing = true);
   }
 
   void _saveTitleEditing([String? title]) async {
@@ -137,8 +138,14 @@ class _DealCardState extends State<DealCard> {
                                         ],
                                       )
                                     else ...[
-                                      IconButton(onPressed: _cancelTitileEditing, icon: Icon(Icons.cancel)),
-                                      IconButton(onPressed: _saveTitleEditing, icon: Icon(Icons.save)),
+                                      IconButton(
+                                        onPressed: _cancelTitileEditing,
+                                        icon: Icon(Icons.cancel, color: Colors.red),
+                                      ),
+                                      IconButton(
+                                        onPressed: _saveTitleEditing,
+                                        icon: Icon(Icons.save, color: Colors.red),
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -171,7 +178,9 @@ class _DealCardState extends State<DealCard> {
   }
 
   Widget _buildDealRecordsList(Deal deal) {
-    return Column(children: [...deal.records.map((record) => HistoryRecordCard(record: record))]);
+    return Column(
+      children: [...deal.records.map((record) => HistoryRecordCard(record: record, key: Key(record.id)))],
+    );
   }
 
   void _showDeleteDealDialog(BuildContext context, Deal deal) {

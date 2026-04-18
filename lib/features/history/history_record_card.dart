@@ -28,7 +28,8 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   var _isNoteEditing = false;
   late final _noteEditController = TextEditingController(text: _record.note);
 
-  void _startNoteEditing() {
+  void _startNoteEditing() async {
+    await Scrollable.ensureVisible(context, alignment: 0.2);
     setState(() => _isNoteEditing = true);
   }
 
@@ -47,7 +48,8 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   var _isNameEditing = false;
   late final _nameEditController = TextEditingController(text: _record.phoneNumber?.name);
 
-  void _startNameEditing() {
+  void _startNameEditing() async {
+    await Scrollable.ensureVisible(context, alignment: 0.2);
     setState(() => _isNameEditing = true);
   }
 
@@ -214,11 +216,20 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                   ],
                                 )
                               else ...[
-                                IconButton(onPressed: _stopAllEditing, icon: Icon(Icons.cancel)),
+                                IconButton(
+                                  onPressed: _stopAllEditing,
+                                  icon: Icon(Icons.cancel, color: Colors.red),
+                                ),
                                 if (_isNoteEditing)
-                                  IconButton(onPressed: _saveNoteEditing, icon: Icon(Icons.save))
+                                  IconButton(
+                                    onPressed: _saveNoteEditing,
+                                    icon: Icon(Icons.save, color: Colors.red),
+                                  )
                                 else if (_isNameEditing)
-                                  IconButton(onPressed: _saveNameEditing, icon: Icon(Icons.save)),
+                                  IconButton(
+                                    onPressed: _saveNameEditing,
+                                    icon: Icon(Icons.save, color: Colors.red),
+                                  ),
                               ],
                           ],
                         ),
