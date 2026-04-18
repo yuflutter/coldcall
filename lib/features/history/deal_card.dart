@@ -30,12 +30,9 @@ class _DealCardState extends State<DealCard> {
       initialText: _deal.title,
       onStopEditing: (newText) async {
         _deal.updateTitle(newText);
-        if (_model.currentExpandedDealId != _deal.id) _model.expandCollapseDealCard(_deal, forceSet: false);
         await _storage.addOrUpdateAndSaveDeal(_deal);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_model.scroller.hasClients) {
-            _model.scroller.jumpTo(0.0);
-          }
+          if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
         });
       },
     );

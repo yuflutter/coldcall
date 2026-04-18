@@ -19,54 +19,36 @@ class HistoryRecordCard extends StatefulWidget {
 
 class _HistoryRecordCardState extends State<HistoryRecordCard> {
   late final _record = widget.record;
+
   final _model = di<HistoryVm>();
   final _storage = di<Storage>();
 
   BuildContext? _detailsBottomSheetContext;
   bool get _isDetailsExpanded => (_detailsBottomSheetContext != null);
 
-  var _isNoteEditing = false;
-  late final _noteEditController = TextEditingController(text: _record.note);
-
   void _startNoteEditing() async {
     await Scrollable.ensureVisible(context, alignment: 0.2);
-    setState(() => _isNoteEditing = true);
+    _model.startEditing(
+      initialText: _record.note ?? '',
+      onStopEditing: (newText) async {
+        _record.updateNote(newText);
+        await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
+        });
+      },
+    );
   }
-
-  void _saveNoteEditing([String? note]) async {
-    note ??= _noteEditController.text;
-    _record.updateNote(note.trim());
-    _stopAllEditing();
-    await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_model.scroller.hasClients) {
-        _model.scroller.jumpTo(0.0);
-      }
-    });
-  }
-
-  var _isNameEditing = false;
-  late final _nameEditController = TextEditingController(text: _record.phoneNumber?.name);
 
   void _startNameEditing() async {
     await Scrollable.ensureVisible(context, alignment: 0.2);
-    setState(() => _isNameEditing = true);
-  }
-
-  void _saveNameEditing([String? name]) async {
-    name ??= _nameEditController.text;
-    _record.phoneNumber?.updateName(name.trim());
-    _stopAllEditing();
-    await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-  }
-
-  void _stopAllEditing() {
-    _noteEditController.text = _record.note ?? '';
-    _nameEditController.text = _record.phoneNumber?.name ?? '';
-    setState(() {
-      _isNoteEditing = false;
-      _isNameEditing = false;
-    });
+    _model.startEditing(
+      initialText: _record.phoneNumber?.name ?? '',
+      onStopEditing: (newText) async {
+        _record.phoneNumber?.updateName(newText);
+        await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+      },
+    );
   }
 
   void _deleteRecord(HistoryRecord record) {
@@ -99,142 +81,89 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
         return ListenableBuilder(
           listenable: _model,
           builder: (context, _) {
-            return PopScope(
-              canPop: !_isNoteEditing,
-              onPopInvokedWithResult: (didPop, result) {
-                if (!didPop) _stopAllEditing();
-              },
-              child: Card(
-                margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
-                color: Colors.white12,
-                child: InkWell(
-                  onTap: (_record.textTranscription != null)
-                      ? () => _showDetails(_record)
-                      : (_record.phoneNumber != null)
-                      ? () => _call(_record)
-                      : null,
-                  onLongPress: () => _showDeleteRecordDialog(context, _record),
-                  child: Padding(
-                    padding: .fromLTRB(10, 0, 0, 4),
-                    child: Row(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: .start,
-                            children: [
-                              if (isAudioPlaying && !_isDetailsExpanded)
-                                AudioPlayerControl()
-                              else
-                                Padding(
-                                  padding: .fromLTRB(0, 7, 0, 0),
-                                  child: Row(
-                                    children: [
-                                      Row(
-                                        mainAxisSize: .min,
-                                        children: [
-                                          if (_record.phoneNumber != null) Icon(Icons.call, size: 14),
-                                          if (_record.audioFileName != null) Icon(Icons.mic, size: 17),
-                                          Gap(8),
-                                        ],
-                                      ),
-                                      _buildTimeDate(_record.startTime),
-                                      Spacer(),
-                                      Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                                      Gap(10),
-                                    ],
-                                  ),
-                                ),
-                              Gap(3),
-                              if (_record.phoneNumber != null) ...[_buildPhoneNumber(_record), Gap(3)],
-                              if (_isNameEditing)
-                                GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                                  child: TextField(
-                                    onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                                    controller: _nameEditController,
-                                    autofocus: true,
-                                    minLines: 1,
-                                    maxLines: 3,
-                                    // textInputAction: TextInputAction.done,
-                                    onSubmitted: _saveNameEditing,
-                                  ),
-                                ),
-
-                              if (_record.note?.isNotEmpty == true && !_isNoteEditing) ...[
-                                Padding(
-                                  padding: (_record.phoneNumber?.name?.isNotEmpty == true) ? .fromLTRB(0, 3, 0, 0) : .zero,
-                                  child: Text(_record.note!, style: TextStyle(fontSize: 15)),
-                                ),
-                                Gap(3),
-                              ],
-                              if (_isNoteEditing)
-                                GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                                  child: TextField(
-                                    onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                                    controller: _noteEditController,
-                                    autofocus: true,
-                                    minLines: 1,
-                                    maxLines: 5,
-                                    // textInputAction: TextInputAction.done,
-                                    onSubmitted: _saveNoteEditing,
-                                  ),
-                                ),
-
-                              if (_record.textTranscription != null) ...[
-                                Padding(
-                                  padding: .fromLTRB(0, 0, 5, 0),
-                                  child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
-                                ),
-                                Gap(3),
-                              ],
-                            ],
-                          ),
-                        ),
-
-                        Column(
+            return Card(
+              margin: const EdgeInsets.fromLTRB(20, 3, 0, 3),
+              color: Colors.white12,
+              child: InkWell(
+                onTap: (_record.textTranscription != null)
+                    ? () => _showDetails(_record)
+                    : (_record.phoneNumber != null)
+                    ? () => _call(_record)
+                    : null,
+                onLongPress: () => _showDeleteRecordDialog(context, _record),
+                child: Padding(
+                  padding: .fromLTRB(10, 0, 0, 4),
+                  child: Row(
+                    crossAxisAlignment: .start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: .start,
                           children: [
-                            if (_record.audioFileName != null)
-                              IconButton(
-                                padding: .zero,
-                                icon: (isAudioPlaying)
-                                    ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
-                                    : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
-                                onPressed: () => _model.startStopAudio(context, _record),
-                              ),
-
-                            if (_record.phoneNumber != null)
-                              if (!_isNoteEditing && !_isNameEditing)
-                                PopupMenuButton(
-                                  itemBuilder: (context) => [
-                                    PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
-                                    PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
-                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                            if (isAudioPlaying && !_isDetailsExpanded)
+                              AudioPlayerControl()
+                            else
+                              Padding(
+                                padding: .fromLTRB(0, 7, 0, 0),
+                                child: Row(
+                                  children: [
+                                    Row(
+                                      mainAxisSize: .min,
+                                      children: [
+                                        if (_record.phoneNumber != null) Icon(Icons.call, size: 14),
+                                        if (_record.audioFileName != null) Icon(Icons.mic, size: 17),
+                                        Gap(8),
+                                      ],
+                                    ),
+                                    _buildTimeDate(_record.startTime),
+                                    Spacer(),
+                                    Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                    Gap(10),
                                   ],
-                                )
-                              else ...[
-                                IconButton(
-                                  onPressed: _stopAllEditing,
-                                  icon: Icon(Icons.cancel, color: Colors.red),
                                 ),
-                                if (_isNoteEditing)
-                                  IconButton(
-                                    onPressed: _saveNoteEditing,
-                                    icon: Icon(Icons.save, color: Colors.red),
-                                  )
-                                else if (_isNameEditing)
-                                  IconButton(
-                                    onPressed: _saveNameEditing,
-                                    icon: Icon(Icons.save, color: Colors.red),
-                                  ),
-                              ],
+                              ),
+                            Gap(3),
+                            if (_record.phoneNumber != null) ...[_buildPhoneNumber(_record), Gap(3)],
+                            if (_record.note?.isNotEmpty == true) ...[
+                              Padding(
+                                padding: (_record.phoneNumber?.name?.isNotEmpty == true) ? .fromLTRB(0, 3, 0, 0) : .zero,
+                                child: Text(_record.note!, style: TextStyle(fontSize: 15)),
+                              ),
+                              Gap(3),
+                            ],
+                            if (_record.textTranscription != null) ...[
+                              Padding(
+                                padding: .fromLTRB(0, 0, 5, 0),
+                                child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
+                              ),
+                              Gap(3),
+                            ],
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+
+                      Column(
+                        children: [
+                          if (_record.audioFileName != null)
+                            IconButton(
+                              padding: .zero,
+                              icon: (isAudioPlaying)
+                                  ? Icon(Icons.stop_circle, color: Colors.red, size: 30)
+                                  : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
+                              onPressed: () => _model.startStopAudio(context, _record),
+                            ),
+
+                          if (_record.phoneNumber != null)
+                            PopupMenuButton(
+                              itemBuilder: (context) => [
+                                PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
+                                PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
+                                PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -423,7 +352,7 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
               ),
             ),
           ),
-          if (record.phoneNumber?.name?.isNotEmpty == true && !_isNameEditing)
+          if (record.phoneNumber?.name?.isNotEmpty == true)
             TextSpan(
               text: '\n(${record.phoneNumber?.name})',
               style: TextStyle(color: Colors.yellow),

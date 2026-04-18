@@ -21,7 +21,10 @@ class _RecorderRecognizerScreenState extends State<RecorderRecognizerScreen> {
 
   late final _initFuture = () async {
     await _model.init();
-    if (widget.startImmediately) await _model.startRecording(deal: widget.deal);
+    if (widget.startImmediately) {
+      // await _model.startRecording(deal: widget.deal);
+      _model.cancelRecording();
+    }
   }();
 
   final _scroller = ScrollController();
