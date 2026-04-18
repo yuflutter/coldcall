@@ -1,7 +1,7 @@
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
-import 'package:coldcall/features/history/record_card.dart';
+import 'package:coldcall/features/history/history_record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:coldcall/storage/storage.dart';
@@ -171,7 +171,7 @@ class _DealCardState extends State<DealCard> {
   }
 
   Widget _buildDealRecordsList(Deal deal) {
-    return Column(children: [...deal.records.map((record) => RecordCard(record: record))]);
+    return Column(children: [...deal.records.map((record) => HistoryRecordCard(record: record))]);
   }
 
   void _showDeleteDealDialog(BuildContext context, Deal deal) {

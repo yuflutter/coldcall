@@ -5,9 +5,9 @@ import 'package:meta/meta.dart';
 
 part 'syncable.mapper.dart';
 
-// Принял спорное архитектурное решение, что синхронизируемые объекты будут мутабельными.
+// Принял спорное архитектурное решение, что все синхронизируемые объекты будут мутабельными.
 // Не хотелось заморачиваться с заменой ссылок в полносвязном дереве. Хотя все равно пришлось это делать при синхронизации.
-// Зато теперь вся логика merge инкапсулирована внутри сущностей. Хотя в случае copyWith() было бы так же.
+// Зато теперь вся логика merge инкапсулирована внутри сущностей. Хотя в случае copyWith() все было бы так же.
 
 abstract class Syncable {
   final String id;
@@ -22,13 +22,7 @@ abstract class Syncable {
       _lastModified = lastModified ?? DateTime.now();
 
   bool get deleted => _deleted;
-  void markDeleted({bool raw = false}) {
-    if (!raw) {
-      update(() => _deleted = true);
-    } else {
-      _deleted = true;
-    }
-  }
+  void markDeleted({bool raw = false}) => update(() => _deleted = true, raw: raw);
 
   DateTime get lastModified => _lastModified;
 
@@ -102,6 +96,7 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     }
 
     // обновляем поля в существующей записи, и перепозиционируем ее в упорядоченном списке
+    // специально оставил это "мертвое" условие, чтобы ты не ошибся при рефакторинге
     if (it != null) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);
@@ -159,6 +154,7 @@ class SyncableMap<T extends Syncable> {
     }
 
     // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
+    // специально оставил это "мертвое" условие, чтобы ты не ошибся при рефакторинге
     if (it != null) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);

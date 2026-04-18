@@ -41,7 +41,9 @@ class Deal extends Syncable with DealMappable {
   String get title => _title;
   void updateTitle(String title) => update(() => _title = title);
 
-  Iterable<HistoryRecord> get records => _records.notDeleted;
+  // для отображения в интерфейсе
+  Iterable<HistoryRecord> get records => _records.notDeleted.sortedBy((r) => r.startTime);
+
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
     update(() => _records.insert(record), raw: raw);

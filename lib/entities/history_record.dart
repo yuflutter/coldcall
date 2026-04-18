@@ -14,7 +14,7 @@ part 'history_record.mapper.dart';
 @MappableClass()
 class HistoryRecord extends Syncable with HistoryRecordMappable {
   // Обрубаем ссылку при сериализации (избегаем рекурсии), но к сожалению при любом copyWith поле тоже пропадает,
-  // но мы copyWith в этом классе не используем, а просто пишем в поля через методы updateXXX.
+  // но мы к счастью copyWith в этом классе не используем, а просто пишем в поля через методы updateXXX.
   @MappableField(hook: NullMappableFieldHook())
   // не делаем final по двум причинам:
   // 1) при создании HistoryRecord с пустым Deal - объект Deal создается позже на основании полей HistoryRecord

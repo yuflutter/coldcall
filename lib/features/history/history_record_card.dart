@@ -8,16 +8,16 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-class RecordCard extends StatefulWidget {
+class HistoryRecordCard extends StatefulWidget {
   final HistoryRecord record;
 
-  const RecordCard({super.key, required this.record});
+  const HistoryRecordCard({super.key, required this.record});
 
   @override
-  State<RecordCard> createState() => _RecordCardState();
+  State<HistoryRecordCard> createState() => _HistoryRecordCardState();
 }
 
-class _RecordCardState extends State<RecordCard> {
+class _HistoryRecordCardState extends State<HistoryRecordCard> {
   late final _record = widget.record;
   final _model = di<HistoryVm>();
   final _storage = di<Storage>();
@@ -412,7 +412,11 @@ class _RecordCardState extends State<RecordCard> {
               ),
             ),
           ),
-          if (record.phoneNumber?.name?.isNotEmpty == true && !_isNameEditing) TextSpan(text: '\n(${record.phoneNumber?.name})'),
+          if (record.phoneNumber?.name?.isNotEmpty == true && !_isNameEditing)
+            TextSpan(
+              text: '\n(${record.phoneNumber?.name})',
+              style: TextStyle(color: Colors.yellow),
+            ),
         ],
       ),
     );
