@@ -23,31 +23,22 @@ class _DealCardState extends State<DealCard> {
   final _model = di<HistoryVm>();
   final _storage = di<Storage>();
 
-  var _isTitleEditing = false;
-  late final _titleEditController = TextEditingController(text: _deal.title);
-
-  void _startTitleEditing() async {
-    await Scrollable.ensureVisible(context, alignment: 0.2);
-    // _model.collapseDealCard();
-    setState(() => _isTitleEditing = true);
-  }
-
-  void _cancelTitileEditing() {
-    _titleEditController.text = _deal.title;
-    setState(() => _isTitleEditing = false);
-  }
-
-  void _saveTitleEditing([String? title]) async {
-    title ??= _titleEditController.text;
-    _deal.updateTitle(title.trim());
-    setState(() => _isTitleEditing = false);
-    if (_model.currentExpandedDealId != _deal.id) _model.collapseDealCard();
-    await _storage.addOrUpdateAndSaveDeal(_deal);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_model.scroller.hasClients) {
-        _model.scroller.jumpTo(0.0);
-      }
-    });
+  void _startTitleEditing(BuildContext headContext) async {
+    _model.expandCollapseDealCard(_deal, forceSet: false);
+    await Scrollable.ensureVisible(headContext, alignment: 0);
+    _model.startEditing(
+      initialText: _deal.title,
+      onStopEditing: (newText) async {
+        _deal.updateTitle(newText);
+        if (_model.currentExpandedDealId != _deal.id) _model.expandCollapseDealCard(_deal, forceSet: false);
+        await _storage.addOrUpdateAndSaveDeal(_deal);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_model.scroller.hasClients) {
+            _model.scroller.jumpTo(0.0);
+          }
+        });
+      },
+    );
   }
 
   @override
@@ -60,29 +51,27 @@ class _DealCardState extends State<DealCard> {
           builder: (context, _) {
             return Column(
               children: [
-                InkWell(
-                  onTap: (!_isTitleEditing) ? () => _model.expandCollapseDealCard(_deal) : null,
-                  onLongPress: (!_isTitleEditing) ? () => _showDeleteDealDialog(context, _deal) : null,
-                  child: PopScope(
-                    canPop: !_isTitleEditing,
-                    onPopInvokedWithResult: (didPop, result) => (!didPop) ? _cancelTitileEditing() : null,
-                    child: Card(
-                      margin: .fromLTRB(0, 4, 0, 4),
-                      color: Colors.white24,
-                      child: Padding(
-                        padding: const .fromLTRB(10, 0, 0, 5),
-                        child: Column(
-                          crossAxisAlignment: .stretch,
-                          children: [
-                            Row(
-                              crossAxisAlignment: .start,
-                              children: [
-                                Expanded(
-                                  child: Padding(
-                                    padding: .fromLTRB(0, 7, 0, 0),
-                                    child: Stack(
-                                      children: [
-                                        if (!_isTitleEditing)
+                Builder(
+                  builder: (headContext) {
+                    return InkWell(
+                      onTap: () => _model.expandCollapseDealCard(_deal),
+                      onLongPress: () => _showDeleteDealDialog(context, _deal),
+                      child: Card(
+                        margin: .fromLTRB(0, 4, 0, 4),
+                        color: Colors.white24,
+                        child: Padding(
+                          padding: const .fromLTRB(10, 0, 0, 5),
+                          child: Column(
+                            crossAxisAlignment: .stretch,
+                            children: [
+                              Row(
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: .fromLTRB(0, 7, 0, 0),
+                                      child: Stack(
+                                        children: [
                                           RichText(
                                             // maxLines: 3,
                                             // overflow: .ellipsis,
@@ -101,28 +90,13 @@ class _DealCardState extends State<DealCard> {
                                                 TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
                                               ],
                                             ),
-                                          )
-                                        else
-                                          GestureDetector(
-                                            behavior: HitTestBehavior.opaque,
-                                            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                                            child: TextField(
-                                              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                                              controller: _titleEditController,
-                                              autofocus: true,
-                                              minLines: 2,
-                                              maxLines: 5,
-                                              // textInputAction: TextInputAction.done,
-                                              onSubmitted: _saveTitleEditing,
-                                            ),
                                           ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Column(
-                                  children: [
-                                    if (!_isTitleEditing)
+                                  Column(
+                                    children: [
                                       PopupMenuButton(
                                         itemBuilder: (context) => [
                                           PopupMenuItem(
@@ -133,40 +107,31 @@ class _DealCardState extends State<DealCard> {
                                             onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
                                             child: Text('Записать'),
                                           ),
-                                          PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
+                                          PopupMenuItem(onTap: () => _startTitleEditing(headContext), child: Text('Изменить описание')),
                                           PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                         ],
-                                      )
-                                    else ...[
-                                      IconButton(
-                                        onPressed: _cancelTitileEditing,
-                                        icon: Icon(Icons.cancel, color: Colors.red),
-                                      ),
-                                      IconButton(
-                                        onPressed: _saveTitleEditing,
-                                        icon: Icon(Icons.save, color: Colors.red),
                                       ),
                                     ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const .fromLTRB(0, 3, 7, 0),
-                              child: Row(
-                                children: [
-                                  Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
-                                  Spacer(),
-                                  if (_deal.lastModified != _deal.created)
-                                    Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+                              Padding(
+                                padding: const .fromLTRB(0, 3, 7, 0),
+                                child: Row(
+                                  children: [
+                                    Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
+                                    Spacer(),
+                                    if (_deal.lastModified != _deal.created)
+                                      Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 if (_model.currentExpandedDealId == _deal.id) _buildDealRecordsList(_deal),
               ],
@@ -184,7 +149,7 @@ class _DealCardState extends State<DealCard> {
   }
 
   void _showDeleteDealDialog(BuildContext context, Deal deal) {
-    _model.expandCollapseDealCard(deal, forceExpand: true);
+    _model.expandCollapseDealCard(deal, forceSet: true);
 
     showDialog(
       context: context,

@@ -12,17 +12,39 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class HistoryVm with SimpleChangeNotifier {
+  final scroller = ScrollController();
+
   // раскрытие карточки Deal
   Deal? _currentExpandedDeal;
   String? get currentExpandedDealId => _currentExpandedDeal?.id;
 
-  void expandCollapseDealCard(Deal deal, {bool forceExpand = false}) {
-    notify(() => _currentExpandedDeal = (_currentExpandedDeal != deal || forceExpand) ? deal : null);
+  void expandCollapseDealCard(Deal deal, {bool? forceSet}) => notify(
+    () => _currentExpandedDeal = (forceSet == false)
+        ? null
+        : (_currentExpandedDeal != deal || forceSet == true)
+        ? deal
+        : null,
+  );
+
+  TextEditingController? editingController;
+  void Function(String)? _onStopEditing;
+  bool get isEditing => (_onStopEditing != null);
+
+  void startEditing({required String initialText, required void Function(String) onStopEditing}) => notify(() {
+    editingController = TextEditingController(text: initialText);
+    _onStopEditing = onStopEditing;
+  });
+
+  void stopEditing() {
+    if (!isEditing) throw 'Editing has not been started!';
+    _onStopEditing!(editingController!.text.trim());
+    cancelEditing();
   }
 
-  void collapseDealCard() => notify(() => _currentExpandedDeal = null);
-
-  final scroller = ScrollController();
+  void cancelEditing() => notify(() {
+    editingController = null;
+    _onStopEditing = null;
+  });
 
   // аудиоплеер
   _AudioSession? _audioSession;
@@ -85,7 +107,7 @@ class HistoryVm with SimpleChangeNotifier {
   void _closeDialer(BuildContext context, bool isCallEnded, Deal deal) async {
     notify(() => dialerOverlayModel = null);
     if (isCallEnded) {
-      expandCollapseDealCard(deal, forceExpand: true);
+      expandCollapseDealCard(deal, forceSet: true);
       if (context.mounted) showToastification(context, 'Звонок сохранен в историю');
     }
   }
