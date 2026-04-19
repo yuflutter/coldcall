@@ -105,6 +105,11 @@ class _DealCardState extends State<DealCard> {
                                             child: Text('Записать'),
                                           ),
                                           PopupMenuItem(onTap: () => _startTitleEditing(headContext), child: Text('Изменить описание')),
+                                          if (_model.isHistoryRecordMoving)
+                                            PopupMenuItem(
+                                              onTap: () => _model.stopMovingHistoryRecord(_deal),
+                                              child: Text('Вставить сюда...'),
+                                            ),
                                           PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                         ],
                                       ),

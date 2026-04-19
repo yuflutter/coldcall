@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Замена стандартного и ужасного SnackBar
-void showToastification(BuildContext context, String message) {
+void showToastification(BuildContext context, String message, {int? seconds}) {
   // Получаем текущий Overlay
   final overlay = Overlay.of(context);
   late OverlayEntry entry;
@@ -48,7 +48,7 @@ void showToastification(BuildContext context, String message) {
   overlay.insert(entry);
 
   // Авто-удаление, если пользователь не смахнул сам
-  Future.delayed(const Duration(seconds: 3), () {
+  Future.delayed(Duration(seconds: seconds ?? 3), () {
     if (entry.mounted) {
       entry.remove();
     }

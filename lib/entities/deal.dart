@@ -54,6 +54,11 @@ class Deal extends Syncable with DealMappable {
   //   _records.insert(record);
   // }
 
+  // Используется только при переносе записи в другое дело
+  void removeRecord(HistoryRecord record) {
+    _records.remove(record);
+  }
+
   bool get hasCalls => records.any((r) => r.phoneNumber != null);
   bool get hasAudios => records.any((r) => r.audioFileName != null);
   PhoneNumber? get lastPhoneNumber => records.firstWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;

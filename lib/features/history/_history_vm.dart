@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
@@ -8,6 +9,7 @@ import 'package:coldcall/entities/history_record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -26,6 +28,7 @@ class HistoryVm with SimpleChangeNotifier {
         : null,
   );
 
+  // редактирование любого поля Deal или HistoryRecord
   TextEditingController? editingController;
   void Function(String)? _onStopEditing;
   bool get isEditing => (_onStopEditing != null);
@@ -45,6 +48,32 @@ class HistoryVm with SimpleChangeNotifier {
     editingController = null;
     _onStopEditing = null;
   });
+
+  // Перенос HistoryRecord между разными Deal
+  HistoryRecord? _movingHistoryRecord;
+  bool get isHistoryRecordMoving => (_movingHistoryRecord != null);
+
+  void startMovingHistoryRecord(HistoryRecord record) {
+    notify(() => _movingHistoryRecord = record);
+  }
+
+  void stopMovingHistoryRecord(Deal deal) async {
+    if (_movingHistoryRecord == null) return;
+    try {
+      _movingHistoryRecord!
+        ..deal!.removeRecord(_movingHistoryRecord!)
+        ..deal = deal;
+      deal.addRecord(_movingHistoryRecord!);
+      _movingHistoryRecord = null;
+      await di<Storage>().addOrUpdateAndSaveDeal(deal);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
+  }
+
+  void cancelMovingHistoryRecord() {
+    notify(() => _movingHistoryRecord = null);
+  }
 
   // аудиоплеер
   _AudioSession? _audioSession;

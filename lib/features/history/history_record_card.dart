@@ -1,6 +1,7 @@
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/log.dart';
+import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
@@ -51,6 +52,15 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
         _record.phoneNumber?.updateName(newText);
         await _storage.addOrUpdateAndSaveDeal(_record.deal!);
       },
+    );
+  }
+
+  void _startMovingHistoryRecord(HistoryRecord record) {
+    _model.startMovingHistoryRecord(record);
+    showToastification(
+      context,
+      'Перенос записи истории\nНайдите папку (дело), в которую хотите перенести данную запись, и в контекстном меню выберите "Вставить сюда..."',
+      seconds: 10,
     );
   }
 
@@ -159,7 +169,7 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
 
                       Column(
                         children: [
-                          if (_record.audioFileName != null)
+                          if (_record.audioFileName != null) ...[
                             IconButton(
                               padding: .zero,
                               icon: (isAudioPlaying)
@@ -167,15 +177,18 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                   : Icon(Icons.play_circle_filled, color: Colors.green, size: 30),
                               onPressed: () => _model.startStopAudio(context, _record),
                             ),
+                          ],
 
-                          if (_record.phoneNumber != null)
-                            PopupMenuButton(
-                              itemBuilder: (context) => [
+                          PopupMenuButton(
+                            itemBuilder: (context) => [
+                              if (_record.phoneNumber != null) ...[
                                 PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
                                 PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
-                                PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                               ],
-                            ),
+                              PopupMenuItem(onTap: () => _startMovingHistoryRecord(_record), child: Text('Перенести...')),
+                              PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                            ],
+                          ),
                         ],
                       ),
                     ],

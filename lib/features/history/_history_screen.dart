@@ -65,7 +65,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         child: Stack(
                           children: [
                             RefreshIndicator(
-                              onRefresh: _storage.init,
+                              onRefresh: () async {
+                                _model.cancelMovingHistoryRecord();
+                                await _storage.init();
+                              },
                               child: ListView.builder(
                                 controller: _model.scroller,
                                 physics: const AlwaysScrollableScrollPhysics(),
