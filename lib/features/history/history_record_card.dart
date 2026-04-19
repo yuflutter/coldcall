@@ -1,7 +1,10 @@
 import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/err.dart';
+import 'package:coldcall/core/log.dart';
 import 'package:coldcall/entities/history_record.dart';
 import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/features/recorder/recognize_file.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
@@ -62,6 +65,18 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
 
   void _call(HistoryRecord record) {
     _model.showDialer(context, deal: record.deal!, phoneNumber: record.phoneNumber);
+  }
+
+  void _improveRecognition() async {
+    try {
+      final filePath = await _record.audioFilePath();
+      if (filePath == null) return;
+
+      final res = await recognizeFile(filePath);
+      Log.deb(res);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
   }
 
   void _aiQuery() {
@@ -250,6 +265,7 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                 PopupMenuButton(
                                   itemBuilder: (context) => [
                                     PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
+                                    PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
                                     PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
                                     PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                   ],

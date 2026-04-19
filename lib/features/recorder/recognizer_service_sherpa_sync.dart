@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:coldcall/features/recorder/recognizer_service_sherpa.dart';
+import 'package:coldcall/features/recorder/recognizer_service.dart';
+import 'package:coldcall/features/recorder/sherpa_utils.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart';
 
 /// Инференс модели синхронный, выполняется в главном треде, поэтому немного фризит интерфейс.
 /// Смотри асинхронную версию (на изоляте).
-class RecognizerServiceSherpaSync extends RecognizerServiceSherpa {
+class RecognizerServiceSherpaSync extends RecognizerService {
   var _isInited = false;
 
   late final VoiceActivityDetector _vad;
@@ -34,7 +35,7 @@ class RecognizerServiceSherpaSync extends RecognizerServiceSherpa {
     if (!_isInited) {
       initBindings();
 
-      final modelPath = await copyAssetsToDocuments();
+      final modelPath = await SherpaUtils.copyAssetsToDocuments(['model.int8.onnx', 'tokens.txt', 'silero_vad.onnx']);
 
       // Silero VAD — детектирует паузы и нарезает сегменты
       _vad = VoiceActivityDetector(
@@ -93,7 +94,7 @@ class RecognizerServiceSherpaSync extends RecognizerServiceSherpa {
   @override
   FutureOr<void> acceptWaveform(Uint8List audioChunk) async {
     // скармливаем чанки в VAD
-    _vad.acceptWaveform(RecognizerServiceSherpa.pcm16ToFloat32(audioChunk));
+    _vad.acceptWaveform(SherpaUtils.pcm16ToFloat32(audioChunk));
     // распознаем сегменты
     _recognizeVadSegments();
   }

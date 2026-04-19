@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:coldcall/features/recorder/recognizer_service_sherpa.dart';
+import 'package:coldcall/features/recorder/recognizer_service.dart';
+import 'package:coldcall/features/recorder/sherpa_utils.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart';
 import 'package:flutter/services.dart';
 
@@ -8,7 +9,7 @@ import 'package:flutter/services.dart';
 enum _IsolateCommand { init, start, accept, flush, stop }
 
 /// Попытка перевести инференс модели в изолят. Ускорения не заметил. Но хоть интерфейс не фризит.
-class RecognizerServiceSherpaIsolate extends RecognizerServiceSherpa {
+class RecognizerServiceSherpaIsolate extends RecognizerService {
   Isolate? _isolate;
 
   SendPort? _toIsolate;
@@ -30,7 +31,7 @@ class RecognizerServiceSherpaIsolate extends RecognizerServiceSherpa {
   Future<void> init() async {
     if (_isolate != null) return;
 
-    final modelPath = await copyAssetsToDocuments();
+    final modelPath = await SherpaUtils.copyAssetsToDocuments(['model.int8.onnx', 'tokens.txt', 'silero_vad.onnx']);
 
     // Запускаем изолят
     _isolate = await Isolate.spawn(_recognizerWorker, {
@@ -152,7 +153,7 @@ void _recognizerWorker(Map<String, dynamic> initData) async {
 
       case _IsolateCommand.accept:
         final data = message['data'] as Uint8List;
-        final samples = RecognizerServiceSherpa.pcm16ToFloat32(data);
+        final samples = SherpaUtils.pcm16ToFloat32(data);
         vad?.acceptWaveform(samples);
         _processVad(vad, recognizer, mainSendPort);
         break;
