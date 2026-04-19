@@ -71,9 +71,9 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     try {
       final filePath = await _record.audioFilePath();
       if (filePath == null) return;
-
       final res = await recognizeFile(filePath);
       Log.deb(res);
+      // TODO: доделать сохранение
     } catch (e, s) {
       Err.add(e, s);
     }
@@ -265,7 +265,7 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                 PopupMenuButton(
                                   itemBuilder: (context) => [
                                     PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
-                                    PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
+                                    // PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
                                     PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
                                     PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                   ],
