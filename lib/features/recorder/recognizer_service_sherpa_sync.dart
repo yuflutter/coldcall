@@ -87,7 +87,7 @@ class RecognizerServiceSherpaSync extends RecognizerService {
   }
 
   @override
-  Future<void> disposeSession() async {
+  void disposeSession() async {
     notify(() => _session = null);
   }
 

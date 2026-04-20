@@ -41,12 +41,19 @@ class UserSessionScreen extends StatelessWidget {
                   // _buildInfoTile(title: 'Версия', subtitle: model.packageInfo.version),
                   // _buildInfoTile(title: 'Разработчик', subtitle: 'evgeet'),
                   Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 0, 15),
+                    child: Text(
+                      '${model.packageInfo.appName}, версия ${model.packageInfo.version}',
+                      style: TextStyle(fontSize: 20, color: Colors.yellow),
+                    ),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                     child: SelectableText(appDescription, style: TextStyle(fontSize: 16)),
                   ),
                   TextButton(
                     onPressed: () => launchUrlString(di<AppConfig>().authorContact, mode: .externalApplication),
-                    child: Text('Связаться с разработчиком'),
+                    child: Text('Связаться с автором', style: TextStyle(fontSize: 18)),
                   ),
                   Gap(20),
                 ],

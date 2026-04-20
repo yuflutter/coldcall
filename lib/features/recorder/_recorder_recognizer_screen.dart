@@ -17,14 +17,12 @@ class RecorderRecognizerScreen extends StatefulWidget {
 }
 
 class _RecorderRecognizerScreenState extends State<RecorderRecognizerScreen> {
-  late final _model = di<RecorderRecognizerVm>(); // ищем по суперклассу
+  late final _model = di<RecorderRecognizerVm>();
 
   late final _initFuture = () async {
     await _model.init();
-    if (widget.startImmediately) {
-      // await _model.startRecording(deal: widget.deal);
-      _model.cancelRecording();
-    }
+    _model.cancelRecording();
+    if (widget.startImmediately) await _model.startRecording(deal: widget.deal);
   }();
 
   final _scroller = ScrollController();
@@ -60,9 +58,9 @@ class _RecorderRecognizerScreenState extends State<RecorderRecognizerScreen> {
                       child: Text(_model.textTranscription, textAlign: .start, style: TextStyle(fontSize: 15)),
                     )
                   else if (_model.isSessionActive)
-                    Text('Говорите, я слушаю...', textAlign: .center, style: TextStyle(fontSize: 15)),
-                  // else
-                  //   Text('Начните новый сеанс', textAlign: .center, style: TextStyle(fontSize: 15)),
+                    Text('Говорите, я слушаю...', textAlign: .center, style: TextStyle(fontSize: 15))
+                  else
+                    Text('Нажмите для начала записи', textAlign: .center, style: TextStyle(fontSize: 15)),
                   Padding(
                     padding: .fromLTRB(20, 35, 20, 20),
                     child: Center(
@@ -142,7 +140,7 @@ class _RecorderRecognizerScreenState extends State<RecorderRecognizerScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Отменить', style: TextStyle(color: Colors.red)),
+            child: const Text('Отменить запись', style: TextStyle(color: Colors.red)),
           ),
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Продолжить')),
         ],

@@ -4,7 +4,7 @@ import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:coldcall/features/recorder/_recorder_recognizer_vm_impl.dart';
+import 'package:coldcall/features/recorder/_recorder_recognizer_vm.dart';
 import 'package:coldcall/features/recorder/recognizer_service_vosk.dart';
 import 'package:coldcall/features/recorder/recognizer_service_sherpa_sync.dart';
 import 'package:coldcall/features/recorder/recognizer_service_sherpa_isolate.dart';
@@ -75,7 +75,7 @@ Future<void> initApp() async {
   DI.put(RecognizerServiceSherpaIsolate());
 
   // Вьюмодель храним глобально, чтобы аудиозапись продолжалась при навигации по экранам
-  DI.put(RecorderRecognizerVmImpl());
+  DI.put(RecorderRecognizerVm());
 
   // Глобальные асинхронные инициализации (контекстные вьюмодели будут инициализированы в соотв. экранах и виджетах)
   await di<UserSessionVm>().init();

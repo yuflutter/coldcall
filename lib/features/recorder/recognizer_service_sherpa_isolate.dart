@@ -86,9 +86,10 @@ class RecognizerServiceSherpaIsolate extends RecognizerService {
   }
 
   @override
-  Future<void> disposeSession() async {
+  void disposeSession() async {
     _active = false;
     _toIsolate?.send({'cmd': _IsolateCommand.stop});
+    _transcription.clear();
     notify(() {});
   }
 
