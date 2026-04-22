@@ -28,6 +28,8 @@ class HistoryVm with SimpleChangeNotifier {
         : null,
   );
 
+  void collapseAllDealCards() => notify(() => _currentExpandedDeal = null);
+
   // редактирование любого поля Deal или HistoryRecord
   TextEditingController? editingController;
   void Function(String)? _onStopEditing;

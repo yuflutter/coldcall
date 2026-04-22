@@ -21,8 +21,11 @@ class _RecorderRecognizerScreenState extends State<RecorderRecognizerScreen> {
 
   late final _initFuture = () async {
     await _model.init();
-    _model.cancelRecording();
-    if (widget.startImmediately) await _model.startRecording(deal: widget.deal);
+    // сбрасываем текст, оставшийся от прошлой сессии. Если запись идет - не сбрасываем!!!
+    if (!_model.isSessionActive) {
+      _model.cancelRecording();
+      if (widget.startImmediately) await _model.startRecording(deal: widget.deal);
+    }
   }();
 
   final _scroller = ScrollController();

@@ -8,6 +8,7 @@ import 'package:coldcall/core/log.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/storage_bundle.dart';
 import 'package:coldcall/entities/sync_status.dart';
+import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -272,6 +273,7 @@ class HistorySyncVm with SimpleChangeNotifier {
       final storage = di<Storage>();
       await storage.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
       await storage.saveAllToStorage();
+      di<HistoryVm>().collapseAllDealCards();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);

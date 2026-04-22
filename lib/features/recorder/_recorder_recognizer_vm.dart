@@ -124,7 +124,7 @@ class RecorderRecognizerVm with SimpleChangeNotifier {
 
       if (context.mounted) showToastification(context, 'Запись сохранена в историю');
 
-      // Сессия обнуляется, но еще не dispopsed, поэтому распознанный текст продолжает отображаться на экране
+      // Сессия обнуляется, но  _recognizer.disposeSession() не вызван, поэтому распознанный текст продолжает отображаться на экране
       notify(() => _session = null);
     } catch (e, s) {
       Err.add(e, s);
