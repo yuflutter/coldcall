@@ -66,6 +66,7 @@ class HistoryVm with SimpleChangeNotifier {
       deal.addRecord(_movingHistoryRecord!);
       _movingHistoryRecord = null;
       await di<Storage>().addOrUpdateAndSaveDeal(deal);
+      expandCollapseDealCard(deal, forceSet: true);
     } catch (e, s) {
       Err.add(e, s);
     }

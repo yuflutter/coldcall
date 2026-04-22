@@ -1,3 +1,4 @@
+import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/history_record.dart';
@@ -57,7 +58,7 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     showToastification(
       context,
       'Перенос записи истории\nНайдите папку (дело), в которую хотите перенести данную запись, и в контекстном меню выберите "Вставить сюда..."',
-      seconds: 10,
+      seconds: 7,
     );
   }
 
@@ -87,9 +88,10 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   // }
 
   void _aiQuery() {
-    final url =
-        'https://www.google.com/search?sourceid=chrome&aep=42&udm=50&q=' +
-        Uri.encodeComponent('Перескажи очень кратко этот текст:\n' + widget.record.textTranscription!);
+    final url = di<AppConfig>().googleAiUrl.replaceFirst(
+      '[PROMPT]',
+      Uri.encodeComponent('Перескажи кратко этот разговор:\n' + widget.record.textTranscription!),
+    );
     launchUrlString(url, mode: .externalApplication);
   }
 
@@ -181,6 +183,11 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                               if (_record.phoneNumber != null) ...[
                                 PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
                                 PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
+                              ],
+                              if (_record.textTranscription != null) ...[
+                                PopupMenuItem(onTap: () => _model.downloadAudio(_record), child: Text('Скачать аудиофайл')),
+                                // PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
+                                PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
                               ],
                               PopupMenuItem(onTap: () => _startMovingHistoryRecord(_record), child: Text('Перенести...')),
                               PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
@@ -277,7 +284,6 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                     PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
                                     // PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
                                     PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
-                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
                                   ],
                                 ),
                               ],

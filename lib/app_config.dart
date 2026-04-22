@@ -52,6 +52,9 @@ class AppConfig {
   /// Порт синхронизации двух устройств, находящихся в одной сети WiFi
   final historySyncHttpPort = 8084;
 
+  /// URL для получения AI-пересказа
+  final googleAiUrl = 'https://www.google.com/search?sourceid=chrome&aep=42&udm=50&q=[PROMPT]';
+
   final authorContact = 'https://vk.com/evgeet';
   final supportEmail = 'evgeet@vk.com';
 }
