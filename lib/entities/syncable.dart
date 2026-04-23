@@ -50,7 +50,7 @@ abstract class Syncable {
 
 // -----------------------------------------------------------------------------------
 
-// Упорядоченный список синхронизируемых объектов. Класс сделан с двумя целями:
+// Упорядоченный (по дате последнего изменения) список синхронизируемых объектов. Класс сделан с двумя целями:
 // 1) запретить простое добавление в конец
 // 2) не дублировать алгоритмы insert и merge
 @MappableClass()
@@ -62,10 +62,6 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
   // возвращаем итераторы, что не так надежно как List.unmodifiable, но более производительно
   Iterable<T> get all => _items;
   Iterable<T> get notDeleted => _items.where((e) => !e.deleted);
-  int get length => _items.length;
-
-  // поскольку список упорядоченный - запрещаем простое добавление, только вставка в нужное место по дате
-  // void add(T item) => _items.add(item);
 
   Future<void> insert(T item) async {
     for (var i = _items.length - 1; i >= 0; i--) {
@@ -129,10 +125,9 @@ class SyncableMap<T extends Syncable> {
     return res;
   }
 
-  // Сортируем на лету и возвращаем итератор значений. Предполагается что тут меньше записей будет, чем в SyncableList
+  // Сортируем на лету и возвращаем итераторы значений. Предполагается что тут меньше записей, чем в SyncableList
   Iterable<T> get all => _items.values;
   Iterable<T> get notDeletedAndSorted => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
-  int get length => _items.length;
 
   T? getById(String id) => _items[id];
 

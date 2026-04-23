@@ -156,8 +156,10 @@ class _DealCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Deal, $Out>
     SyncableList<HistoryRecord>,
     HistoryRecord
   >
+
 get _records => (($value._records as SyncableList<HistoryRecord>).copyWith
     .$chain((v) => call(records: v))) as SyncableListCopyWith<$R, SyncableList<HistoryRecord>, SyncableList<HistoryRecord>, HistoryRecord>;
+
   @override
   $R call({
     Object? id = $none,

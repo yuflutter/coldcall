@@ -273,7 +273,7 @@ class HistorySyncVm with SimpleChangeNotifier {
       final storage = di<Storage>();
       await storage.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
       await storage.saveAllToStorage();
-      di<HistoryVm>().collapseAllDealCards();
+      di<HistoryVm>().refreshAll();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);
