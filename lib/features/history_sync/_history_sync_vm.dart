@@ -249,7 +249,7 @@ class HistorySyncVm with SimpleChangeNotifier {
     final missingFileNames = <String>[];
     for (final remoteDeal in remoteBundle.deals) {
       if (!remoteDeal.deleted) {
-        for (final remoteRecord in remoteDeal.records) {
+        for (final remoteRecord in remoteDeal.notDeletedAndSortedRecords) {
           if (remoteRecord.audioFileName != null) {
             if (!File(await remoteRecord.audioFilePath()!).existsSync()) {
               missingFileNames.add(remoteRecord.audioFileName!);

@@ -146,7 +146,7 @@ class _DealCardState extends State<DealCard> {
 
   Widget _buildDealRecordsList(Deal deal) {
     return Column(
-      children: [...deal.records.map((record) => HistoryRecordCard(record: record, key: Key(record.id)))],
+      children: [...deal.notDeletedAndSortedRecords.map((record) => HistoryRecordCard(record: record, key: Key(record.id)))],
     );
   }
 
@@ -166,9 +166,12 @@ class _DealCardState extends State<DealCard> {
               'Вы уверены, что хотите удалить дело от ${timeDateFormat.format(deal.created)}?',
               style: const TextStyle(color: Colors.white70),
             ),
-            if (deal.records.isNotEmpty) ...[
+            if (deal.notDeletedAndSortedRecords.isNotEmpty) ...[
               Gap(15),
-              Text('Внимание!!!\nДело содержит ${deal.records.length} записей истории!', style: TextStyle(color: Colors.red)),
+              Text(
+                'Внимание!!!\nДело содержит ${deal.notDeletedAndSortedRecords.length} записей истории!',
+                style: TextStyle(color: Colors.red),
+              ),
             ],
           ],
         ),

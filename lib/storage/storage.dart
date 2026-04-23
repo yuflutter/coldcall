@@ -19,7 +19,7 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  Iterable<Deal> get deals => _deals.notDeleted;
+  Iterable<Deal> get notDeletedDeals => _deals.notDeleted;
 
   var _phoneBook = SyncableMap<PhoneNumber>();
   Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
@@ -151,7 +151,10 @@ class Storage with SimpleChangeNotifier {
     other.normalizePhoneNumbers(_phoneBook);
     _deals.merge(
       other,
-      (d1, d2) => d1.records.isNotEmpty && d2.records.isNotEmpty && d1.records.first.isIntervalsOverlapped(d2.records.first),
+      (d1, d2) =>
+          d1.notDeletedAndSortedRecords.isNotEmpty &&
+          d2.notDeletedAndSortedRecords.isNotEmpty &&
+          d1.notDeletedAndSortedRecords.first.isIntervalsOverlapped(d2.notDeletedAndSortedRecords.first),
     );
   }
 

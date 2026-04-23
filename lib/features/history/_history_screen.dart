@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return ListenableBuilder(
           listenable: _model,
           builder: (context, _) {
-            final deals = _storage.deals.toList();
+            final deals = _storage.notDeletedDeals.toList();
             return PopScope(
               canPop: !(_model.isDialerShown || _model.isEditing),
               onPopInvokedWithResult: (didPop, result) {

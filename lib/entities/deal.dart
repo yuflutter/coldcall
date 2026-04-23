@@ -41,27 +41,24 @@ class Deal extends Syncable with DealMappable {
   String get title => _title;
   void updateTitle(String title) => update(() => _title = title);
 
+  // для синхронизации
+  Iterable<HistoryRecord> get allRecords => _records.all;
   // для отображения в интерфейсе
-  Iterable<HistoryRecord> get records => _records.notDeleted.sortedBy((r) => r.startTime);
+  Iterable<HistoryRecord> get notDeletedAndSortedRecords => _records.notDeleted.sortedBy((r) => r.startTime);
 
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
     update(() => _records.insert(record), raw: raw);
   }
 
-  // void insertRecord(HistoryRecord record) {
-  //   record.deal = this;
-  //   _records.insert(record);
-  // }
-
   // Используется только при переносе записи в другое дело
   void removeRecord(HistoryRecord record) {
     _records.remove(record);
   }
 
-  bool get hasCalls => records.any((r) => r.phoneNumber != null);
-  bool get hasAudios => records.any((r) => r.audioFileName != null);
-  PhoneNumber? get lastPhoneNumber => records.firstWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;
+  bool get hasCalls => notDeletedAndSortedRecords.any((r) => r.phoneNumber != null);
+  bool get hasAudios => notDeletedAndSortedRecords.any((r) => r.audioFileName != null);
+  PhoneNumber? get lastPhoneNumber => notDeletedAndSortedRecords.firstWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;
 
   @override
   void mergeFrom(covariant Deal other) {
@@ -69,7 +66,7 @@ class Deal extends Syncable with DealMappable {
 
     _title = other.title;
 
-    for (final otherRecord in other.records) {
+    for (final otherRecord in other.allRecords) {
       otherRecord.deal = this;
       _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
