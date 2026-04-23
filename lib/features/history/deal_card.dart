@@ -1,8 +1,9 @@
 import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/err.dart';
 import 'package:coldcall/entities/deal.dart';
-import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/history_record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/features/history/history_styles.dart';
 import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
@@ -24,16 +25,20 @@ class _DealCardState extends State<DealCard> {
   final _storage = di<Storage>();
 
   void _startTitleEditing(BuildContext headContext) async {
-    _model.expandCollapseDealCard(_deal, forceSet: false);
+    // _model.expandCollapseDealCard(_deal, forceSet: false);
     await Scrollable.ensureVisible(headContext, alignment: 0);
     _model.startEditing(
       initialText: _deal.title,
       onStopEditing: (newText) async {
-        _deal.updateTitle(newText);
-        await _storage.addOrUpdateAndSaveDeal(_deal);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
-        });
+        try {
+          _deal.updateTitle(newText);
+          await _storage.addOrUpdateAndSaveDeal(_deal);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
+          });
+        } catch (e, s) {
+          Err.add(e, s);
+        }
       },
     );
   }

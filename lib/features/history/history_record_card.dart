@@ -1,13 +1,13 @@
 import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/history_record.dart';
-import 'package:coldcall/features/history/_history_screen.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/features/history/history_styles.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class HistoryRecordCard extends StatefulWidget {
@@ -33,11 +33,15 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     _model.startEditing(
       initialText: _record.note ?? '',
       onStopEditing: (newText) async {
-        _record.updateNote(newText);
-        await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
-        });
+        try {
+          _record.updateNote(newText);
+          await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
+          });
+        } catch (e, s) {
+          Err.add(e, s);
+        }
       },
     );
   }
@@ -47,8 +51,12 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     _model.startEditing(
       initialText: _record.phoneNumber?.name ?? '',
       onStopEditing: (newText) async {
-        _record.phoneNumber?.updateName(newText);
-        await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+        try {
+          _record.phoneNumber?.updateName(newText);
+          await _storage.addOrUpdateAndSaveDeal(_record.deal!);
+        } catch (e, s) {
+          Err.add(e, s);
+        }
       },
     );
   }
@@ -62,12 +70,19 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     );
   }
 
-  void _deleteRecord(HistoryRecord record) {
-    _storage.deleteHistoryRecord(record);
-    Navigator.pop(context);
-    if (_detailsBottomSheetContext != null) {
-      Navigator.of(_detailsBottomSheetContext!).pop();
-      setState(() => _detailsBottomSheetContext = null);
+  void _deleteRecord(HistoryRecord record) async {
+    try {
+      Navigator.pop(context);
+      await _storage.deleteHistoryRecord(record);
+      if (_detailsBottomSheetContext != null) {
+        Navigator.of(_detailsBottomSheetContext!).pop();
+        setState(() => _detailsBottomSheetContext = null);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
+      });
+    } catch (e, s) {
+      Err.add(e, s);
     }
   }
 
@@ -139,9 +154,9 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                         Gap(8),
                                       ],
                                     ),
-                                    _buildTimeDate(_record.startTime),
+                                    TimeDateText(date: _record.startTime, fontSize: 16),
                                     Spacer(),
-                                    Text(formatDuration(_record.duration), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                    Text(formatDuration(_record.duration), style: TextStyle(fontSize: 14, color: Colors.white70)),
                                     Gap(10),
                                   ],
                                 ),
@@ -255,8 +270,11 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                     children: [
                                       if (record.phoneNumber != null)
                                         _buildTableRow('Номер:', record.phoneNumber?.formattedNumber ?? 'no phone'),
-                                      _buildTableRow('Начало:', _buildTimeDate(record.startTime)),
-                                      _buildTableRow('Длительность:', formatDuration(record.duration)),
+                                      _buildTableRow('Начало:', TimeDateText(date: _record.startTime, fontSize: 15)),
+                                      _buildTableRow(
+                                        'Длительность:',
+                                        Text(formatDuration(record.duration), style: TextStyle(fontSize: 15, color: Colors.white70)),
+                                      ),
                                     ],
                                   ),
                                   Gap(15),
@@ -350,6 +368,9 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
     );
   }
 
+  static final _labelStyle = TextStyle(color: Colors.grey[400], fontSize: 16);
+  static final _valueStyle = TextStyle(color: Colors.white, fontSize: 17);
+
   void _showDeleteRecordDialog(BuildContext context, HistoryRecord record) {
     showDialog(
       context: context,
@@ -393,28 +414,11 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
       ),
     );
   }
-
-  Widget _buildTimeDate(DateTime date) {
-    return Row(
-      mainAxisSize: .min,
-      children: [
-        Text(
-          _onlyTimeFormat.format(date),
-          style: TextStyle(color: Colors.white70, fontSize: 15, fontWeight: .bold),
-        ),
-        Gap(10),
-        Text(_onlyDateFormat.format(date), style: TextStyle(color: Colors.white70, fontSize: 15)),
-      ],
-    );
-  }
-
-  static final _onlyTimeFormat = DateFormat('HH:mm');
-  static final _onlyDateFormat = DateFormat('dd.MM.yyyy');
-  final _labelStyle = TextStyle(color: Colors.grey[400], fontSize: 16);
-  final _valueStyle = TextStyle(color: Colors.white, fontSize: 17);
 }
 
 class AudioPlayerControl extends StatelessWidget {
+  const AudioPlayerControl({super.key});
+
   @override
   Widget build(BuildContext context) {
     final model = di<HistoryVm>();

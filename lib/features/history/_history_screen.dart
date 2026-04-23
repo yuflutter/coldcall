@@ -2,11 +2,11 @@ import 'package:coldcall/core/di.dart';
 import 'package:coldcall/features/dialer/dialer_overlay.dart';
 import 'package:coldcall/features/history/deal_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
+import 'package:coldcall/features/history/history_styles.dart';
 import 'package:coldcall/features/history_sync/_history_sync_screen.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -49,11 +49,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 appBar: AppBar(
                   title: (_storage.lastSyncStatus.lastSyncTime != null)
                       ? Column(
-                          mainAxisSize: .min,
                           crossAxisAlignment: .start,
                           children: [
-                            Text('Синхронизировано', style: TextStyle(fontSize: 15)),
-                            Text(timeDateFormat.format(_storage.lastSyncStatus.lastSyncTime!), style: TextStyle(fontSize: 14)),
+                            Text('Синхронизировано', style: TextStyle(fontSize: 15, color: Colors.white70)),
+                            TimeDateText(date: _storage.lastSyncStatus.lastSyncTime!, fontSize: 15),
                           ],
                         )
                       : Text('Настроить синхронизацию:'),
@@ -128,13 +127,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
       },
     );
   }
-}
-
-final dateTimeFormat = DateFormat('dd.MM.yyyy HH:mm ');
-final timeDateFormat = DateFormat('HH:mm dd.MM.yyyy');
-
-String formatDuration(Duration duration) {
-  final minutes = duration.inMinutes;
-  final seconds = duration.inSeconds % 60;
-  return '$minutesм $secondsс';
 }

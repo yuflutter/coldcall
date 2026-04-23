@@ -125,6 +125,9 @@ class Storage with SimpleChangeNotifier {
     }
 
     record.markDeleted();
+    _deals
+      ..remove(record.deal!)
+      ..insert(record.deal!);
     notifyListeners();
     await saveAllToStorage();
   }
