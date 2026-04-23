@@ -29,16 +29,13 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   bool get _isDetailsExpanded => (_detailsBottomSheetContext != null);
 
   void _startNoteEditing() async {
-    await Scrollable.ensureVisible(context, alignment: 0.2);
     _model.startEditing(
       initialText: _record.note ?? '',
       onStopEditing: (newText) async {
         try {
           _record.updateNote(newText);
           await _storage.addOrUpdateAndSaveDeal(_record.deal!);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
-          });
+          _model.scrollToLastModifiedDeal();
         } catch (e, s) {
           Err.add(e, s);
         }
@@ -47,7 +44,6 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   }
 
   void _startNameEditing() async {
-    await Scrollable.ensureVisible(context, alignment: 0.2);
     _model.startEditing(
       initialText: _record.phoneNumber?.name ?? '',
       onStopEditing: (newText) async {
@@ -73,14 +69,12 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
   void _deleteRecord(HistoryRecord record) async {
     try {
       Navigator.pop(context);
-      await _storage.deleteHistoryRecord(record);
       if (_detailsBottomSheetContext != null) {
         Navigator.of(_detailsBottomSheetContext!).pop();
         setState(() => _detailsBottomSheetContext = null);
       }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
-      });
+      await _storage.deleteHistoryRecord(record);
+      _model.scrollToLastModifiedDeal();
     } catch (e, s) {
       Err.add(e, s);
     }

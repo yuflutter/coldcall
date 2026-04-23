@@ -24,18 +24,15 @@ class _DealCardState extends State<DealCard> {
   final _model = di<HistoryVm>();
   final _storage = di<Storage>();
 
-  void _startTitleEditing(BuildContext headContext) async {
-    // _model.expandCollapseDealCard(_deal, forceSet: false);
-    await Scrollable.ensureVisible(headContext, alignment: 0);
+  void _startTitleEditing() async {
     _model.startEditing(
       initialText: _deal.title,
       onStopEditing: (newText) async {
         try {
           _deal.updateTitle(newText);
           await _storage.addOrUpdateAndSaveDeal(_deal);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_model.scroller.hasClients) _model.scroller.jumpTo(0.0);
-          });
+          await Future.delayed(Duration(seconds: 1));
+          _model.scrollToLastModifiedDeal();
         } catch (e, s) {
           Err.add(e, s);
         }
@@ -109,7 +106,7 @@ class _DealCardState extends State<DealCard> {
                                             onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
                                             child: Text('Записать'),
                                           ),
-                                          PopupMenuItem(onTap: () => _startTitleEditing(headContext), child: Text('Изменить описание')),
+                                          PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
                                           if (_model.isHistoryRecordMoving)
                                             PopupMenuItem(
                                               onTap: () => _model.stopMovingHistoryRecord(_deal),

@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return ListenableBuilder(
           listenable: _model,
           builder: (context, _) {
-            final deals = _storage.notDeletedDeals.toList();
+            final deals = _storage.notDeletedDeals;
             return PopScope(
               canPop: !(_model.isDialerShown || _model.isEditing),
               onPopInvokedWithResult: (didPop, result) {
@@ -77,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                             ),
 
-                            // Редактор одного поля Deal или HistoryRecord
+                            // Редактор одного поля (или Deal или HistoryRecord)
                             if (_model.isEditing)
                               Positioned.fill(
                                 child: Container(

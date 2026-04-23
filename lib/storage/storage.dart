@@ -19,7 +19,7 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  Iterable<Deal> get notDeletedDeals => _deals.notDeleted;
+  List<Deal> get notDeletedDeals => List.from(_deals.notDeleted); // пришшлось итератор заменить на список для ScrollablePositionedList
 
   var _phoneBook = SyncableMap<PhoneNumber>();
   Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;

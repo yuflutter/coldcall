@@ -86,6 +86,16 @@ class HistoryVm with SimpleChangeNotifier {
     notify(() => _movingHistoryRecord = null);
   }
 
+  void scrollToLastModifiedDeal() {
+    scroller.jumpTo(0);
+  }
+
+  // void forceShowInScrollable(Deal deal) {
+  //   final index = di<Storage>().notDeletedDeals.indexWhere((e) => e.id == deal.id);
+  //   if (index >= 0) scroller.jumpTo(index: index);
+  //   Log.deb(index);
+  // }
+
   // аудиоплеер
   _AudioSession? _audioSession;
   String? get currentPlayingRecordId => _audioSession?.currentPlayingRecord.id;
