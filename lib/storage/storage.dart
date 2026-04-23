@@ -116,18 +116,13 @@ class Storage with SimpleChangeNotifier {
   }
 
   Future<void> deleteHistoryRecord(HistoryRecord record) async {
-    // Файлы пока не удаляем, может сделать режим восстановления из корзины?
-    // if (record.audioFilePath != null) {
-    //   try {
-    //     final file = File(record.audioFilePath!);
-    //     if (await file.exists()) {
-    //       await file.delete();
-    //     }
-    //   } catch (e) {
-    //     print('Error deleting audio file: $e');
-    //   }
-    // }
-    // records.remove(record);
+    if (record.audioFileName != null) {
+      try {
+        await File(await record.audioFilePath()!).delete();
+      } catch (e) {
+        _log.war('Error deleting file: $e');
+      }
+    }
 
     record.markDeleted();
     notifyListeners();

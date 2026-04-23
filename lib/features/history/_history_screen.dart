@@ -91,36 +91,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           child: Container(color: Colors.transparent),
                                         ),
                                       ),
-                                      GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                                        child: Container(
-                                          padding: .fromLTRB(15, 10, 15, 10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              TextField(
-                                                onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                                                controller: _model.editingController,
-                                                autofocus: true,
-                                                minLines: 2,
-                                                maxLines: 5,
-                                                // textInputAction: TextInputAction.done,
-                                                // onSubmitted: _saveTitleEditing,
-                                              ),
-                                              Gap(5),
-                                              Row(
-                                                mainAxisAlignment: .spaceEvenly,
-                                                children: [
-                                                  TextButton(onPressed: _model.cancelEditing, child: Text('Отменить')),
-                                                  TextButton(onPressed: _model.stopEditing, child: Text('Сохранить')),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                      Container(
+                                        padding: .fromLTRB(15, 10, 15, 10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            TextField(controller: _model.editingController, autofocus: true, minLines: 2, maxLines: 5),
+                                            Gap(5),
+                                            Row(
+                                              mainAxisAlignment: .spaceEvenly,
+                                              children: [
+                                                TextButton(onPressed: _model.cancelEditing, child: Text('Отменить')),
+                                                TextButton(onPressed: _model.stopEditing, child: Text('Сохранить')),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
