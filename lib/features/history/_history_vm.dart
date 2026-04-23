@@ -16,6 +16,14 @@ import 'package:flutter/material.dart';
 class HistoryVm with SimpleChangeNotifier {
   final scroller = ScrollController();
 
+  Future<void> refreshAll() async {
+    await stopAndDisposeAudio();
+    cancelEditing();
+    cancelMovingHistoryRecord();
+    collapseAllDealCards();
+    await di<Storage>().init();
+  }
+
   // раскрытие карточки Deal
   Deal? _currentExpandedDeal;
   String? get currentExpandedDealId => _currentExpandedDeal?.id;
