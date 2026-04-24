@@ -12,13 +12,14 @@ Future<void> showHistorySyncScreen(BuildContext context) {
 
 class HistorySyncScreen extends StatefulWidget {
   const HistorySyncScreen({super.key});
+
   @override
   State<HistorySyncScreen> createState() => _HistorySyncScreenState();
 }
 
 class _HistorySyncScreenState extends State<HistorySyncScreen> {
   late final _model = HistorySyncVm();
-  late final Future _initFuture = _model.init();
+  late final _initFuture = _model.init();
 
   @override
   void dispose() {

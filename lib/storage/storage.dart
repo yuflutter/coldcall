@@ -19,7 +19,7 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  List<Deal> get notDeletedDeals => List.from(_deals.notDeleted); // пришшлось итератор заменить на список для ScrollablePositionedList
+  Iterable<Deal> get notDeletedDeals => _deals.notDeleted;
 
   var _phoneBook = SyncableMap<PhoneNumber>();
   Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
@@ -59,13 +59,15 @@ class Storage with SimpleChangeNotifier {
           notifyListeners();
         } catch (e, s) {
           _log.err(e, s);
-          file.delete();
+          file.deleteSync();
+          rethrow;
         }
       }
     } catch (e, s) {
       _log.err(e, s);
       rethrow;
     }
+    Log.deb('Storage.init() has done');
   }
 
   Future<void> saveAllToStorage() async {

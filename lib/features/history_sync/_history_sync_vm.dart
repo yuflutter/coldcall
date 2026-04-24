@@ -144,7 +144,6 @@ class HistorySyncVm with SimpleChangeNotifier {
         _wsSender = _channel!.sink.add;
         _sendLastSyncTime();
 
-        // Завершаем connectAsClient, так как она используется в FutureBuilder
         () async {
           try {
             await for (final data in _channel!.stream) {
@@ -154,12 +153,15 @@ class HistorySyncVm with SimpleChangeNotifier {
             Err.add(e, s);
           }
         }();
+
+        // Завершаем connectAsClient, так как она используется в FutureBuilder
         return;
         //
       } catch (e) {
         notify(() => _userLog.writeln(e.toString()));
       }
-      await Future.delayed(Duration(seconds: 5));
+
+      await Future.delayed(Duration(seconds: 1));
     }
   }
 
@@ -224,8 +226,10 @@ class HistorySyncVm with SimpleChangeNotifier {
             } else {
               throw 'Получен лишний файл';
             }
-          } else {
-            if (jsonDecode(incoming) == true) await _done();
+
+            // сигнал окончания обмена - получение true из вебсокета, соотв. мы его и отправляем
+          } else if (jsonDecode(incoming) == true) {
+            await _done();
           }
 
         default:
@@ -273,7 +277,7 @@ class HistorySyncVm with SimpleChangeNotifier {
       final storage = di<Storage>();
       await storage.updateLastSyncStatus(status.copyWith(lastSyncTime: DateTime.now()));
       await storage.saveAllToStorage();
-      di<HistoryVm>().refreshAll();
+      await di<HistoryVm>().refreshAll();
       notify(() => stage = .done);
     } catch (e, s) {
       Err.add(e, s);
