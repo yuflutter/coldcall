@@ -17,7 +17,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 // Вообще тут нужен конечный автомат на классах, но я поленился. Прошу понять и простить.
 enum SyncStage { roleSelecting, qrScaning, netConecting, lastSyncTimeSwap, jsonSwap, missingFileNamesSwap, missingFilesSwap, done }
 
-class HistorySyncVm with SimpleChangeNotifier {
+class StorageSyncVm with SimpleChangeNotifier {
   static const _qrUrlPrefix = 'coldcall:';
 
   late SyncStatus status;

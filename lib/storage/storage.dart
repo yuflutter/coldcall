@@ -19,10 +19,10 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  Iterable<Deal> get notDeletedDeals => _deals.notDeleted;
+  List<Deal> get notDeletedDeals => _deals.notDeleted;
 
   var _phoneBook = SyncableMap<PhoneNumber>();
-  Iterable<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
+  List<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
@@ -38,15 +38,12 @@ class Storage with SimpleChangeNotifier {
       try {
         _lastSyncStatus = SyncStatusMapper.fromJson(jsonDecode(prefs.getString(_lastSyncStatusStorageKey)!));
       } catch (e, s) {
-        _log.err(e, s);
+        _log.war(e, stack: s);
         _lastSyncStatus = SyncStatus();
       }
-      notifyListeners();
 
       final dir = await getApplicationDocumentsDirectory();
-
       _storageFilePath = '${dir.path}/$_storageFileName';
-
       final file = File(_storageFilePath);
       if (file.existsSync()) {
         try {
@@ -57,8 +54,7 @@ class Storage with SimpleChangeNotifier {
             deal.normalizePhoneNumbers(_phoneBook);
           }
           notifyListeners();
-        } catch (e, s) {
-          _log.err(e, s);
+        } catch (_) {
           file.deleteSync();
           rethrow;
         }
@@ -67,12 +63,13 @@ class Storage with SimpleChangeNotifier {
       _log.err(e, s);
       rethrow;
     }
+    notifyListeners();
     Log.deb('Storage.init() has done');
   }
 
   Future<void> saveAllToStorage() async {
     try {
-      final bundle = StorageBundle(deals: _deals.all.toList(), phoneBook: _phoneBook.all.toList());
+      final bundle = StorageBundle(deals: _deals.all, phoneBook: _phoneBook.all);
       final file = File(_storageFilePath);
       final json = bundle.toJson();
       Log.deb(json);
@@ -85,8 +82,7 @@ class Storage with SimpleChangeNotifier {
   /// Вызывается сервисом синхронизации после успешного завершения обмена.
   Future<void> updateLastSyncStatus(SyncStatus status) async {
     try {
-      _lastSyncStatus = status;
-      notifyListeners();
+      notify(() => _lastSyncStatus = status);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
     } catch (e, s) {
@@ -107,13 +103,23 @@ class Storage with SimpleChangeNotifier {
   // У нас сущности мутабельные, а этот метод нужен только для переупорядочивания списка
   // (держим список всегда отсортированным по дате последнего изменения)
   Future<void> addOrUpdateAndSaveDeal(Deal deal, {bool raw = false}) async {
-    deal.normalizePhoneNumbers(_phoneBook);
-    _deals
-      ..remove(deal)
-      ..insert(deal);
-    if (!raw) {
-      notifyListeners();
-      await saveAllToStorage();
+    try {
+      Log.deb('addOrUpdateAndSaveDeal');
+      deal.normalizePhoneNumbers(_phoneBook);
+      Log.deb('normalizePhoneNumbers');
+      _deals.remove(deal);
+      Log.deb('remove');
+      await Future.delayed(Duration(seconds: 1));
+      _deals.insert(deal);
+      Log.deb('insert');
+      if (!raw) {
+        notifyListeners();
+        Log.deb('notifyListeners');
+        await saveAllToStorage();
+        Log.deb('saveAllToStorage');
+      }
+    } catch (e, s) {
+      Err.add(e, s);
     }
   }
 

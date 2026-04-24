@@ -3,7 +3,7 @@ import 'package:coldcall/features/dialer/dialer_overlay.dart';
 import 'package:coldcall/features/history/deal_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/history/history_styles.dart';
-import 'package:coldcall/features/history_sync/_history_sync_screen.dart';
+import 'package:coldcall/features/storage_sync/_storage_sync_screen.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return ListenableBuilder(
           listenable: _model,
           builder: (context, _) {
-            final deals = _storage.notDeletedDeals.toList();
+            final deals = _storage.notDeletedDeals;
             return PopScope(
               canPop: !(_model.isDialerShown || _model.isEditing),
               onPopInvokedWithResult: (didPop, result) {
@@ -56,7 +56,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ],
                         )
                       : Text('Настроить синхронизацию:'),
-                  actions: [IconButton(onPressed: () => showHistorySyncScreen(context), icon: Icon(Icons.sync))],
+                  actions: [IconButton(onPressed: () => showStorageSyncScreen(context), icon: Icon(Icons.sync))],
                 ),
                 body: (deals.isEmpty)
                     ? Center(child: Text('История пуста'))

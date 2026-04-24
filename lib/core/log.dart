@@ -20,9 +20,9 @@ class Log {
     on?.call(m);
   }
 
-  void war(dynamic i) {
+  void war(dynamic i, {StackTrace? stack}) {
     final m = i.toString();
-    dev.log(m, name: name, level: 1);
+    dev.log(m, name: name, level: 1, stackTrace: stack);
     on?.call(m);
   }
 

@@ -59,11 +59,10 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
 
   SyncableList([final List<T>? items]) : _items = items ?? [];
 
-  // возвращаем итераторы, что не так надежно как List.unmodifiable, но более производительно
-  Iterable<T> get all => _items;
-  Iterable<T> get notDeleted => _items.where((e) => !e.deleted);
+  List<T> get all => List.of(_items);
+  List<T> get notDeleted => _items.where((e) => !e.deleted).toList();
 
-  Future<void> insert(T item) async {
+  void insert(T item) {
     for (var i = _items.length - 1; i >= 0; i--) {
       final it = _items[i];
       if (it.isOlder(item)) {
@@ -74,7 +73,9 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     _items.insert(0, item);
   }
 
-  void remove(T item) => _items.remove(item);
+  void remove(T item) {
+    _items.remove(item);
+  }
 
   void merge(T other, bool Function(T item1, T intem2) softMergeCondition) {
     // ищем запись по ID
@@ -125,9 +126,9 @@ class SyncableMap<T extends Syncable> {
     return res;
   }
 
-  // Сортируем на лету и возвращаем итераторы значений. Предполагается что тут меньше записей, чем в SyncableList
-  Iterable<T> get all => _items.values;
-  Iterable<T> get notDeletedAndSorted => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
+  // Сортируем на лету. Предполагается что тут меньше записей, чем в SyncableList
+  List<T> get all => List.of(_items.values);
+  List<T> get notDeletedAndSorted => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
 
   T? getById(String id) => _items[id];
 
