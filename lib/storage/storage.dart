@@ -53,7 +53,6 @@ class Storage with SimpleChangeNotifier {
           for (final deal in _deals.notDeleted) {
             deal.normalizePhoneNumbers(_phoneBook);
           }
-          notifyListeners();
         } catch (_) {
           file.deleteSync();
           rethrow;
