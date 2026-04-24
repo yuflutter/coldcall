@@ -1,5 +1,6 @@
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/err.dart';
+import 'package:coldcall/core/show_toastification.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/features/history/history_record_card.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
@@ -23,6 +24,14 @@ class _DealCardState extends State<DealCard> {
 
   final _model = di<HistoryVm>();
   final _storage = di<Storage>();
+
+  void _expandCollapseDealCard(Deal deal) {
+    if (deal.notDeletedAndSortedRecords.isEmpty) {
+      showToastification(context, 'Записей не обнаружено.\nМожете удалить дело.');
+    } else {
+      _model.expandCollapseDealCard(_deal);
+    }
+  }
 
   void _startTitleEditing() async {
     _model.startEditing(
@@ -53,7 +62,7 @@ class _DealCardState extends State<DealCard> {
                 Builder(
                   builder: (headContext) {
                     return InkWell(
-                      onTap: () => _model.expandCollapseDealCard(_deal),
+                      onTap: () => _expandCollapseDealCard(_deal),
                       onLongPress: () => _showDeleteDealDialog(context, _deal),
                       child: Card(
                         margin: .fromLTRB(0, 4, 0, 4),

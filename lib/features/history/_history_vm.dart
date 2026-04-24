@@ -31,25 +31,31 @@ class HistoryVm with SimpleChangeNotifier {
   Deal? _currentExpandedDeal;
   String? get currentExpandedDealId => _currentExpandedDeal?.id;
 
-  void expandCollapseDealCard(Deal deal, {bool? forceSet}) => notify(
-    () => _currentExpandedDeal = (forceSet == false)
-        ? null
-        : (_currentExpandedDeal != deal || forceSet == true)
-        ? deal
-        : null,
-  );
+  void expandCollapseDealCard(Deal deal, {bool? forceSet}) {
+    notify(
+      () => _currentExpandedDeal = (forceSet == false)
+          ? null
+          : (_currentExpandedDeal != deal || forceSet == true)
+          ? deal
+          : null,
+    );
+  }
 
-  void collapseAllDealCards() => notify(() => _currentExpandedDeal = null);
+  void collapseAllDealCards() {
+    notify(() => _currentExpandedDeal = null);
+  }
 
   // редактирование любого поля Deal или HistoryRecord
   TextEditingController? editingController;
   void Function(String)? _onStopEditing;
   bool get isEditing => (_onStopEditing != null);
 
-  void startEditing({required String initialText, required void Function(String) onStopEditing}) => notify(() {
-    editingController = TextEditingController(text: initialText);
-    _onStopEditing = onStopEditing;
-  });
+  void startEditing({required String initialText, required void Function(String) onStopEditing}) {
+    notify(() {
+      editingController = TextEditingController(text: initialText);
+      _onStopEditing = onStopEditing;
+    });
+  }
 
   void stopEditing() {
     if (!isEditing) throw 'Editing has not been started!';
@@ -70,16 +76,17 @@ class HistoryVm with SimpleChangeNotifier {
     notify(() => _movingHistoryRecord = record);
   }
 
-  void stopMovingHistoryRecord(Deal deal) async {
+  void stopMovingHistoryRecord(Deal newDeal) async {
     if (_movingHistoryRecord == null) return;
     try {
-      _movingHistoryRecord!
-        ..deal!.removeRecord(_movingHistoryRecord!)
-        ..deal = deal;
-      deal.addRecord(_movingHistoryRecord!);
+      final oldDeal = _movingHistoryRecord!.deal!;
+      final newHistoryRecord = _movingHistoryRecord!.copyWith();
+      _movingHistoryRecord!.markDeleted();
+      newDeal.addRecord(newHistoryRecord);
       _movingHistoryRecord = null;
-      await di<Storage>().addOrUpdateAndSaveDeal(deal);
-      expandCollapseDealCard(deal, forceSet: true);
+      await di<Storage>().addOrUpdateAndSaveDeal(oldDeal);
+      await di<Storage>().addOrUpdateAndSaveDeal(newDeal);
+      expandCollapseDealCard(newDeal, forceSet: true);
     } catch (e, s) {
       Err.add(e, s);
     }

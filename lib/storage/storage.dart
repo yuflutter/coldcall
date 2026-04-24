@@ -103,19 +103,13 @@ class Storage with SimpleChangeNotifier {
   // (держим список всегда отсортированным по дате последнего изменения)
   Future<void> addOrUpdateAndSaveDeal(Deal deal, {bool raw = false}) async {
     try {
-      Log.deb('addOrUpdateAndSaveDeal');
       deal.normalizePhoneNumbers(_phoneBook);
-      Log.deb('normalizePhoneNumbers');
-      _deals.remove(deal);
-      Log.deb('remove');
-      await Future.delayed(Duration(seconds: 1));
-      _deals.insert(deal);
-      Log.deb('insert');
+      _deals
+        ..remove(deal)
+        ..insert(deal);
       if (!raw) {
         notifyListeners();
-        Log.deb('notifyListeners');
         await saveAllToStorage();
-        Log.deb('saveAllToStorage');
       }
     } catch (e, s) {
       Err.add(e, s);
@@ -132,11 +126,7 @@ class Storage with SimpleChangeNotifier {
     }
 
     record.markDeleted();
-    _deals
-      ..remove(record.deal!)
-      ..insert(record.deal!);
-    notifyListeners();
-    await saveAllToStorage();
+    await addOrUpdateAndSaveDeal(record.deal!);
   }
 
   Future<void> deleteDeal(Deal deal) async {
