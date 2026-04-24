@@ -11,6 +11,7 @@ import 'package:coldcall/features/recorder/_recorder_recognizer_vm.dart';
 import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'features/dialer/_camera_dialer_screen.dart';
 import 'features/history/_history_screen.dart';
 import 'features/user_session/_user_session_screen.dart';
@@ -41,6 +42,15 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ColdCall',
+      debugShowCheckedModeBanner: false,
+
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [Locale('ru', ''), Locale('en', '')],
+
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark, // Включаем темный режим здесь
@@ -63,13 +73,13 @@ class _MyAppState extends State<MyApp> {
           foregroundColor: Colors.white,
         ),
       ),
+
       home: SimpleFutureBuilder(
         future: _initFuture,
         builder: (context, _) {
           return MainScreen();
         },
       ),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

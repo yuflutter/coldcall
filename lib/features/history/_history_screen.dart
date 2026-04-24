@@ -77,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                             ),
 
-                            // Редактор одного поля (или Deal или HistoryRecord)
+                            // редактирование любого поля Deal или HistoryRecord
                             if (_model.isEditing)
                               Positioned.fill(
                                 child: Container(
