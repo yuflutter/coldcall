@@ -249,9 +249,9 @@ class StorageSyncVm with SimpleChangeNotifier {
       storage.mergeAndSavePhoneNumber(remotePhoneNumber);
     }
 
-    // формируем список имен файлов, ссылки на которые есть, а самих файлов нет
     final missingFileNames = <String>[];
     for (final remoteDeal in remoteBundle.deals) {
+      // формируем список имен файлов, ссылки на которые есть, а самих файлов нет
       if (!remoteDeal.deleted) {
         for (final remoteRecord in remoteDeal.notDeletedAndSortedRecords) {
           if (remoteRecord.audioFileName != null) {

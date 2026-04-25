@@ -26,7 +26,7 @@ class Deal extends Syncable with DealMappable {
   }) : _title = title,
        _records = records ?? SyncableList<HistoryRecord>() {
     // Восстанавливаем ссылку, обрубленную сериализатором TODO: здесь неявное поведение, подумать как улучшить
-    for (var r in _records.notDeleted) {
+    for (var r in _records.all) {
       r.deal = this;
     }
   }
