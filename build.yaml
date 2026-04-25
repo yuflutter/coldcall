@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      dart_mappable_builder:
+        options:
+          # Исключаем "equals" и "stringify", чтобы не менять == и toString().
+          # Поскольку в данном проекте мутабельный стейт, мы ожидаем что == сравнивает только объектные ссылки
+          generateMethods: ["decode", "encode", "copy"]

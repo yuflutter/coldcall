@@ -153,27 +153,6 @@ mixin HistoryRecordMappable {
     $identity,
     $identity,
   );
-  @override
-  String toString() {
-    return HistoryRecordMapper.ensureInitialized().stringifyValue(
-      this as HistoryRecord,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return HistoryRecordMapper.ensureInitialized().equalsValue(
-      this as HistoryRecord,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return HistoryRecordMapper.ensureInitialized().hashValue(
-      this as HistoryRecord,
-    );
-  }
 }
 
 extension HistoryRecordValueCopy<$R, $Out>

@@ -21,9 +21,7 @@ class HistoryVm with SimpleChangeNotifier {
     cancelEditing();
     cancelMovingHistoryRecord();
     collapseAllDealCards();
-    // Если раскомментить эту строку - после повторного вызова Storage.init() (при синхронизации или RefreshIndicator)
-    // происходит что-то непонятное - любые последующие редактирования дел и записей виснут намертво без логов.
-    // Не смог найти причину (может рекурсия, но где???),поэтому решил запретить обновление путем повторной инициализации хранилища.
+
     await di<Storage>().init();
   }
 

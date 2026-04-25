@@ -79,27 +79,6 @@ mixin StorageBundleMappable {
     $identity,
     $identity,
   );
-  @override
-  String toString() {
-    return StorageBundleMapper.ensureInitialized().stringifyValue(
-      this as StorageBundle,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return StorageBundleMapper.ensureInitialized().equalsValue(
-      this as StorageBundle,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return StorageBundleMapper.ensureInitialized().hashValue(
-      this as StorageBundle,
-    );
-  }
 }
 
 extension StorageBundleValueCopy<$R, $Out>

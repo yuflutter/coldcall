@@ -102,20 +102,6 @@ mixin DealMappable {
 
   DealCopyWith<Deal, Deal, Deal> get copyWith =>
       _DealCopyWithImpl<Deal, Deal>(this as Deal, $identity, $identity);
-  @override
-  String toString() {
-    return DealMapper.ensureInitialized().stringifyValue(this as Deal);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return DealMapper.ensureInitialized().equalsValue(this as Deal, other);
-  }
-
-  @override
-  int get hashCode {
-    return DealMapper.ensureInitialized().hashValue(this as Deal);
-  }
 }
 
 extension DealValueCopy<$R, $Out> on ObjectCopyWith<$R, Deal, $Out> {
@@ -156,8 +142,10 @@ class _DealCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Deal, $Out>
     SyncableList<HistoryRecord>,
     HistoryRecord
   >
+
 get _records => (($value._records as SyncableList<HistoryRecord>).copyWith
     .$chain((v) => call(records: v))) as SyncableListCopyWith<$R, SyncableList<HistoryRecord>, SyncableList<HistoryRecord>, HistoryRecord>;
+
   @override
   $R call({
     Object? id = $none,

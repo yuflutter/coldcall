@@ -60,8 +60,8 @@ class Storage with SimpleChangeNotifier {
         }
       }
     } catch (e, s) {
-      notifyListeners();
       _log.err(e, s);
+      notifyListeners();
       rethrow;
     }
     notifyListeners();

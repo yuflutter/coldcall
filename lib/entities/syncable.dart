@@ -72,6 +72,11 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     _items.add(item);
   }
 
+  // void reload(List<T> items) {
+  //   _items.clear();
+  //   _items.addAll(items);
+  // }
+
   // Поскольку у нас синхронизация, ничего не удаляем, а только помечаем удаленным
   // void remove(T item) {
   //   _items.remove(item);
@@ -94,7 +99,7 @@ class SyncableList<T extends Syncable> with SyncableListMappable {
     }
 
     // обновляем поля в существующей записи (выбираем более старую, и доводим до состояния новой)
-    if (it != null && it != other) {
+    if (it != null && it != other && it.lastModified != other.lastModified) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);
         Log.deb('it.mergeFrom(other)');
@@ -157,7 +162,7 @@ class SyncableMap<T extends Syncable> {
 
     // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
     // специально оставил это "мертвое" условие, чтобы сохранить подобие с SyncableList, и ты не ошибся при рефакторинге
-    if (it != null && it != other) {
+    if (it != null && it != other && it.lastModified != other.lastModified) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);
         return it;
