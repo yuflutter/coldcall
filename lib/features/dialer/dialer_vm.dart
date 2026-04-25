@@ -61,13 +61,21 @@ class DialerVm with SimpleChangeNotifier {
   Future<void> saveCallInHistory() async {
     if (!isCalling) return;
 
-    final record = HistoryRecord.manually(
-      deal: deal,
-      startTime: startTime!,
-      duration: DateTime.now().difference(startTime!),
-      phoneNumber: PhoneNumber.fromRaw(rawNumber: phone),
-    );
+    try {
+      final record = HistoryRecord.manually(
+        deal: deal, // если тут null - дело создается автоматически внутри конструктора
+        startTime: startTime!,
+        duration: DateTime.now().difference(startTime!),
+        phoneNumber: PhoneNumber.fromRaw(rawNumber: phone),
+      );
 
-    await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
+      if (deal != null) {
+        deal!.addRecord(record);
+      }
+
+      await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
   }
 }

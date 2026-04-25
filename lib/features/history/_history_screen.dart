@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return ListenableBuilder(
           listenable: _model,
           builder: (context, _) {
-            final deals = _storage.notDeletedDeals;
+            final deals = _storage.notDeletedAndSortedDeals;
             return PopScope(
               canPop: !(_model.isDialerShown || _model.isEditing),
               onPopInvokedWithResult: (didPop, result) {
@@ -52,7 +52,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           crossAxisAlignment: .start,
                           children: [
                             Text('Синхронизировано', style: TextStyle(fontSize: 15, color: Colors.white70)),
-                            TimeDateText(date: _storage.lastSyncStatus.lastSyncTime!, fontSize: 15),
+                            TimeDateText(date: _storage.lastSyncStatus.lastSyncTime!, fontSize: 14),
                           ],
                         )
                       : Text('Настроить синхронизацию:'),
@@ -71,7 +71,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 itemCount: deals.length,
                                 reverse: true,
                                 itemBuilder: (context, index) {
-                                  final deal = deals[deals.length - 1 - index];
+                                  final deal = deals[index];
                                   return DealCard(deal: deal, key: Key(deal.id));
                                 },
                               ),

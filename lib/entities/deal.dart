@@ -41,19 +41,14 @@ class Deal extends Syncable with DealMappable {
   String get title => _title;
   void updateTitle(String title) => update(() => _title = title);
 
-  // для синхронизации
-  List<HistoryRecord> get allRecords => _records.all;
+  // только для merge
+  List<HistoryRecord> get allRecords => _records.all.toList();
   // для отображения в интерфейсе
   List<HistoryRecord> get notDeletedAndSortedRecords => _records.notDeleted.sortedBy((r) => r.startTime);
 
   void addRecord(HistoryRecord record, {bool raw = false}) {
     record.deal = this;
-    update(() => _records.insert(record), raw: raw);
-  }
-
-  // Используется только при переносе записи в другое дело
-  void removeRecord(HistoryRecord record) {
-    _records.remove(record);
+    update(() => _records.merge(record), raw: raw);
   }
 
   bool get hasCalls => notDeletedAndSortedRecords.any((r) => r.phoneNumber != null);
@@ -68,7 +63,7 @@ class Deal extends Syncable with DealMappable {
 
     for (final otherRecord in other.allRecords) {
       otherRecord.deal = this;
-      _records.merge(otherRecord, (r1, r2) => r1.isIntervalsOverlapped(r2));
+      _records.merge(otherRecord, softMergeCondition: (r1, r2) => r1.isIntervalsOverlapped(r2));
     }
   }
 }

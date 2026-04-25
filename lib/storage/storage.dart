@@ -10,6 +10,7 @@ import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/entities/storage_bundle.dart';
 import 'package:coldcall/entities/syncable.dart';
 import 'package:coldcall/entities/sync_status.dart';
+import 'package:collection/collection.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,10 +20,10 @@ class Storage with SimpleChangeNotifier {
   static const _storageFileName = 'storage.json';
 
   var _deals = SyncableList<Deal>();
-  List<Deal> get notDeletedDeals => _deals.notDeleted;
+  List<Deal> get notDeletedAndSortedDeals => _deals.notDeleted.sorted((e1, e2) => (e1.lastModified.isBefore(e2.lastModified)) ? 1 : -1);
 
   var _phoneBook = SyncableMap<PhoneNumber>();
-  List<PhoneNumber> get phoneBook => _phoneBook.notDeletedAndSorted;
+  List<PhoneNumber> get phoneBook => _phoneBook.notDeleted.sorted((e1, e2) => (e1.lastModified.isBefore(e2.lastModified)) ? 1 : -1);
 
   // Статус последней успешной синхронизации
   late SyncStatus _lastSyncStatus;
@@ -68,11 +69,12 @@ class Storage with SimpleChangeNotifier {
 
   Future<void> saveAllToStorage() async {
     try {
-      final bundle = StorageBundle(deals: _deals.all, phoneBook: _phoneBook.all);
+      final bundle = StorageBundle(deals: _deals.all.toList(), phoneBook: _phoneBook.all.toList());
       final file = File(_storageFilePath);
       final json = bundle.toJson();
-      Log.deb(json);
+      // Log.deb(json);
       await file.writeAsString(json);
+      Log.deb('Deal list saved in storage');
     } catch (e, s) {
       Err.add(e, s);
     }
@@ -80,40 +82,16 @@ class Storage with SimpleChangeNotifier {
 
   /// Вызывается сервисом синхронизации после успешного завершения обмена.
   Future<void> updateLastSyncStatus(SyncStatus status) async {
-    try {
-      notify(() => _lastSyncStatus = status);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
-    } catch (e, s) {
-      Err.add(e, s);
-    }
+    notify(() => _lastSyncStatus = status);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
   }
 
-  // Future<void> addDeal(Deal deal, {bool raw = false}) async {
-  //   _deals.add(deal);
-  //   if (!raw) {
-  //     notifyListeners();
-  //     await saveToStorage();
-  //   }
-  // }
-
-  // void insertDeal(Deal deal) => _deals.insert(deal);
-
-  // У нас сущности мутабельные, а этот метод нужен только для переупорядочивания списка
-  // (держим список всегда отсортированным по дате последнего изменения)
-  Future<void> addOrUpdateAndSaveDeal(Deal deal, {bool raw = false}) async {
-    try {
-      deal.normalizePhoneNumbers(_phoneBook);
-      _deals
-        ..remove(deal)
-        ..insert(deal);
-      if (!raw) {
-        notifyListeners();
-        await saveAllToStorage();
-      }
-    } catch (e, s) {
-      Err.add(e, s);
-    }
+  Future<void> addOrUpdateAndSaveDeal(Deal deal) async {
+    deal.normalizePhoneNumbers(_phoneBook);
+    _deals.merge(deal);
+    notifyListeners();
+    await saveAllToStorage();
   }
 
   Future<void> deleteHistoryRecord(HistoryRecord record) async {
@@ -124,7 +102,6 @@ class Storage with SimpleChangeNotifier {
         _log.war('Error deleting file: $e');
       }
     }
-
     record.markDeleted();
     await addOrUpdateAndSaveDeal(record.deal!);
   }
@@ -135,8 +112,7 @@ class Storage with SimpleChangeNotifier {
     //   deleteHistoryRecord(record);
     // }
     deal.markDeleted();
-    notifyListeners();
-    await saveAllToStorage();
+    await addOrUpdateAndSaveDeal(deal);
   }
 
   // Возвращает данные, измененные после даты последней синхронизации, хранящейся на другом устройстве
@@ -151,7 +127,7 @@ class Storage with SimpleChangeNotifier {
     other.normalizePhoneNumbers(_phoneBook);
     _deals.merge(
       other,
-      (d1, d2) =>
+      softMergeCondition: (d1, d2) =>
           d1.notDeletedAndSortedRecords.isNotEmpty &&
           d2.notDeletedAndSortedRecords.isNotEmpty &&
           d1.notDeletedAndSortedRecords.first.isIntervalsOverlapped(d2.notDeletedAndSortedRecords.first),

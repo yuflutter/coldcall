@@ -111,12 +111,16 @@ class RecorderRecognizerVm with SimpleChangeNotifier {
       notifyListeners();
 
       final record = HistoryRecord.manually(
-        deal: _session!.deal,
+        deal: _session!.deal, // если тут null - дело создается автоматически внутри конструктора
         startTime: result.startTime,
         duration: result.duration,
         audioFileName: result.audioFilePath.split('/').last, // для синхронизации важно хранить только имя
         textTranscription: textTranscription,
       );
+
+      if (_session!.deal != null) {
+        _session!.deal!.addRecord(record);
+      }
 
       await di<Storage>().addOrUpdateAndSaveDeal(record.deal!);
 

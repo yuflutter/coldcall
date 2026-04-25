@@ -88,20 +88,16 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
 
   // Нормализуем ссылку на номер телефона при десериализации или ручном создании записи
   void normalizePhoneNumber(SyncableMap<PhoneNumber> phoneBook) {
-    // восстановление ссылки после десериализации
+    // десериализация - восстановление объектной ссылки по id
     if (_phoneNumber == null && _phoneNumberId != null) {
       _phoneNumber = phoneBook.getById(_phoneNumberId!);
 
-      // ручное создание из диалера
+      // ручное создание из диалера - обновляем ссылку после merge с существующей записью
     } else if (_phoneNumber != null) {
-      final phone = phoneBook.getById(_phoneNumber!.id);
-      if (phone == null) {
-        phoneBook.add(_phoneNumber!);
-      } else {
-        phone.mergeFrom(_phoneNumber!);
-        _phoneNumber = phone;
-      }
-      _phoneNumberId = _phoneNumber!.id;
+      final id = _phoneNumber!.id;
+      phoneBook.merge(_phoneNumber!);
+      _phoneNumber = phoneBook.getById(id);
+      _phoneNumberId = id;
     }
   }
 

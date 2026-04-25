@@ -1,3 +1,4 @@
+import 'package:coldcall/core/log.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
@@ -50,59 +51,58 @@ abstract class Syncable {
 
 // -----------------------------------------------------------------------------------
 
-// Упорядоченный (по дате последнего изменения) список синхронизируемых объектов. Класс сделан с двумя целями:
-// 1) запретить простое добавление в конец
-// 2) не дублировать алгоритмы insert и merge
+// Список синхронизируемых объектов.  Класс сделан с двумя целями:
+// 1) запретить добавление без merge
+// 2) не дублировать алгоритм merge
 @MappableClass()
 class SyncableList<T extends Syncable> with SyncableListMappable {
   final List<T> _items;
 
   SyncableList([final List<T>? items]) : _items = items ?? [];
 
-  List<T> get all => List.of(_items);
-  List<T> get notDeleted => _items.where((e) => !e.deleted).toList();
+  // Возвращаем итераторы для производительности (дальше они будут сортироваться) и безопасности (относительной)
+  Iterable<T> get all => _items;
+  Iterable<T> get notDeleted => _items.where((e) => !e.deleted);
 
-  void insert(T item) {
-    for (var i = _items.length - 1; i >= 0; i--) {
-      final it = _items[i];
-      if (it.isOlder(item)) {
-        _items.insert(i + 1, item);
-        return;
-      }
+  void _add(T item) {
+    // всегда ищем только среди неудаленных! удаленные остаются при переносе записей между делами!
+    if (notDeleted.any((e) => e.id == item.id)) {
+      throw 'SyncableList already contains item "${item.id}"';
     }
-    _items.insert(0, item);
+    _items.add(item);
   }
 
-  void remove(T item) {
-    _items.remove(item);
-  }
+  // Поскольку у нас синхронизация, ничего не удаляем, а только помечаем удаленным
+  // void remove(T item) {
+  //   _items.remove(item);
+  // }
 
-  void merge(T other, bool Function(T item1, T intem2) softMergeCondition) {
+  void merge(T other, {bool Function(T item1, T intem2)? softMergeCondition}) {
     // ищем запись по ID
-    var it = _items.firstWhereOrNull((e) => e.id == other.id);
+    // всегда ищем только среди неудаленных! удаленные остаются при переносе записей между делами!
+    var it = notDeleted.firstWhereOrNull((e) => e.id == other.id);
 
-    if (it == null) {
-      // Ищем похожую запись по мягкому условию, после чего объединяем две в одну
-      it = _items.firstWhereOrNull((e) => softMergeCondition(e, other));
-
-      // добавляем новую запись
-      if (it == null) {
-        insert(other);
-        return;
-      }
+    if (it == null && softMergeCondition != null) {
+      // ищем похожую запись по мягкому условию, после чего объединяем две в одну
+      it = notDeleted.firstWhereOrNull((e) => softMergeCondition(e, other));
     }
 
-    // обновляем поля в существующей записи, и перепозиционируем ее в упорядоченном списке
-    // специально оставил это "мертвое" условие, чтобы ты не ошибся при рефакторинге
-    if (it != null) {
+    // добавляем новую запись
+    if (it == null) {
+      _add(other);
+      return;
+    }
+
+    // обновляем поля в существующей записи (выбираем более старую, и доводим до состояния новой)
+    if (it != null && it != other) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);
-        remove(it);
-        insert(it);
+        Log.deb('it.mergeFrom(other)');
       } else {
         other.mergeFrom(it);
-        remove(it);
-        insert(other);
+        it.markDeleted();
+        _add(other);
+        Log.deb('other.mergeFrom(it)');
       }
     }
   }
@@ -121,23 +121,29 @@ class SyncableMap<T extends Syncable> {
   factory SyncableMap.fromList(List<T> values) {
     final res = SyncableMap<T>();
     for (final value in values) {
-      res.add(value);
+      res._add(value);
     }
     return res;
   }
 
-  // Сортируем на лету. Предполагается что тут меньше записей, чем в SyncableList
-  List<T> get all => List.of(_items.values);
-  List<T> get notDeletedAndSorted => _items.values.where((e) => !e.deleted).sortedBy((item) => item.lastModified);
+  // Возвращаем итераторы для производительности (дальше они будут сортироваться) и безопасности (относительной)
+  Iterable<T> get all => _items.values;
+  Iterable<T> get notDeleted => _items.values.where((e) => !e.deleted);
 
   T? getById(String id) => _items[id];
 
-  void add(T item) {
-    if (getById(item.id) != null) throw 'SyncableMap already contains item \'${item.id}\'';
+  void _add(T item) {
+    // TODO: возможно нужно искать только среди неудаленных? Смотри как сделано в SyncableList!
+    if (getById(item.id) != null) {
+      throw 'SyncableMap already contains item "${item.id}"';
+    }
     _items[item.id] = item;
   }
 
-  void remove(T item) => _items.remove(item.id);
+  // Поскольку у нас синхронизация, ничего не удаляем, а только помечаем удаленным
+  // void remove(T item) {
+  //   _items.remove(item.id);
+  // }
 
   T merge(T other) {
     // ищем запись по ID
@@ -150,8 +156,8 @@ class SyncableMap<T extends Syncable> {
     }
 
     // обновляем поля в существующей записи, возвращаем актуальную объектную ссылку
-    // специально оставил это "мертвое" условие, чтобы ты не ошибся при рефакторинге
-    if (it != null) {
+    // специально оставил это "мертвое" условие, чтобы сохранить подобие с SyncableList, и ты не ошибся при рефакторинге
+    if (it != null && it != other) {
       if (it.isOlder(other)) {
         it.mergeFrom(other);
         return it;
@@ -160,6 +166,8 @@ class SyncableMap<T extends Syncable> {
         _items[it.id] = other;
         return other;
       }
+    } else {
+      return it;
     }
   }
 }

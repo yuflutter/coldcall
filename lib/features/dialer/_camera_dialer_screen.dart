@@ -123,7 +123,12 @@ class _CameraDialerScreenState extends State<CameraDialerScreen> with SingleTick
                           ),
                         ),
 
-                      Positioned(bottom: 110, left: 0, right: 0, child: Center(child: Text('Наведите камеру на номер'))),
+                      Positioned(
+                        bottom: 110,
+                        left: 0,
+                        right: 0,
+                        child: Center(child: Text('Наведите камеру на номер\nили нажмите для ручного набора', textAlign: .center)),
+                      ),
 
                       // Набор номера вручную
                       if (!_model.isDialerShown)

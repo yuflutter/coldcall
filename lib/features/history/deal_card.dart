@@ -116,7 +116,7 @@ class _DealCardState extends State<DealCard> {
                                             child: Text('Записать'),
                                           ),
                                           PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
-                                          if (_model.isHistoryRecordMoving)
+                                          if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
                                             PopupMenuItem(
                                               onTap: () => _model.stopMovingHistoryRecord(_deal),
                                               child: Text('Вставить сюда...'),
@@ -198,8 +198,12 @@ class _DealCardState extends State<DealCard> {
   }
 
   void _deleteDeal(Deal deal) {
-    _storage.deleteDeal(deal);
-    Navigator.pop(context);
+    try {
+      _storage.deleteDeal(deal);
+      Navigator.pop(context);
+    } catch (e, s) {
+      Err.add(e, s);
+    }
   }
 
   static final _dateTextStyle = TextStyle(fontSize: 14, color: Colors.grey);
