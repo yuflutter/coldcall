@@ -49,8 +49,8 @@ class Storage with SimpleChangeNotifier {
       if (file.existsSync()) {
         try {
           final bundle = StorageBundleMapper.fromJson(await file.readAsString());
-          _deals = SyncableList(bundle.deals);
           _phoneBook = SyncableMap.fromList(bundle.phoneBook);
+          _deals = SyncableList(bundle.deals);
           for (final deal in _deals.notDeleted) {
             deal.normalizePhoneNumbers(_phoneBook);
           }
@@ -60,6 +60,7 @@ class Storage with SimpleChangeNotifier {
         }
       }
     } catch (e, s) {
+      notifyListeners();
       _log.err(e, s);
       rethrow;
     }
@@ -87,6 +88,7 @@ class Storage with SimpleChangeNotifier {
     await prefs.setString(_lastSyncStatusStorageKey, jsonEncode(_lastSyncStatus));
   }
 
+  // У нас все объекты мутабельные, поэтому здесь только вставка в список и сохранение в storage
   Future<void> addOrUpdateAndSaveDeal(Deal deal) async {
     deal.normalizePhoneNumbers(_phoneBook);
     _deals.merge(deal);

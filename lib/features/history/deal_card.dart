@@ -33,13 +33,13 @@ class _DealCardState extends State<DealCard> {
     }
   }
 
-  void _startTitleEditing() async {
+  void _startTitleEditing(Deal deal) async {
     _model.startEditing(
-      initialText: _deal.title,
+      initialText: deal.title,
       onStopEditing: (newText) async {
         try {
-          _deal.updateTitle(newText);
-          await _storage.addOrUpdateAndSaveDeal(_deal);
+          deal.updateTitle(newText);
+          await _storage.addOrUpdateAndSaveDeal(deal);
           await Future.delayed(Duration(seconds: 1));
           _model.scrollToLastModifiedDeal();
         } catch (e, s) {
@@ -115,7 +115,7 @@ class _DealCardState extends State<DealCard> {
                                             onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
                                             child: Text('Записать'),
                                           ),
-                                          PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
+                                          PopupMenuItem(onTap: () => _startTitleEditing(_deal), child: Text('Изменить описание')),
                                           if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
                                             PopupMenuItem(
                                               onTap: () => _model.stopMovingHistoryRecord(_deal),
