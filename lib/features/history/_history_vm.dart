@@ -24,7 +24,7 @@ class HistoryVm with SimpleChangeNotifier {
     // Если раскомментить эту строку - после повторного вызова Storage.init() (при синхронизации или RefreshIndicator)
     // происходит что-то непонятное - любые последующие редактирования дел и записей подвисают в кору без логов.
     // Не смог найти причину, поэтому решил запретить обновление путем повторной инициализации хранилища.
-    await di<Storage>().init();
+    // await di<Storage>().init();
   }
 
   // раскрытие карточки Deal
@@ -80,12 +80,15 @@ class HistoryVm with SimpleChangeNotifier {
     if (_movingHistoryRecord == null) return;
     try {
       final oldDeal = _movingHistoryRecord!.deal!;
-      final newHistoryRecord = _movingHistoryRecord!.copyWith();
+      // напоминаю, что copyWith() сбрасывает поле deal
+      final newHistoryRecord = _movingHistoryRecord!.copyWith()..deal = newDeal;
       _movingHistoryRecord!.markDeleted();
-      newDeal.addRecord(newHistoryRecord);
-      _movingHistoryRecord = null;
       await di<Storage>().addOrUpdateAndSaveDeal(oldDeal);
+
+      newDeal.addRecord(newHistoryRecord);
       await di<Storage>().addOrUpdateAndSaveDeal(newDeal);
+
+      _movingHistoryRecord = null;
       expandCollapseDealCard(newDeal, forceSet: true);
     } catch (e, s) {
       Err.add(e, s);
