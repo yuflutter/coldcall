@@ -107,6 +107,11 @@ class _DealCardState extends State<DealCard> {
                                     children: [
                                       PopupMenuButton(
                                         itemBuilder: (context) => [
+                                          if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
+                                            PopupMenuItem(
+                                              onTap: () => _model.stopMovingHistoryRecord(_deal),
+                                              child: Text('Вставить сюда...'),
+                                            ),
                                           PopupMenuItem(
                                             onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
                                             child: Text('Позвонить'),
@@ -116,11 +121,6 @@ class _DealCardState extends State<DealCard> {
                                             child: Text('Записать'),
                                           ),
                                           PopupMenuItem(onTap: () => _startTitleEditing(_deal), child: Text('Изменить описание')),
-                                          if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
-                                            PopupMenuItem(
-                                              onTap: () => _model.stopMovingHistoryRecord(_deal),
-                                              child: Text('Вставить сюда...'),
-                                            ),
                                           PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
                                         ],
                                       ),

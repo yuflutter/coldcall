@@ -77,12 +77,12 @@ class HistoryVm with SimpleChangeNotifier {
   void stopMovingHistoryRecord(Deal newDeal) async {
     if (_movingHistoryRecord == null) return;
     try {
-      final oldDeal = _movingHistoryRecord!.deal!;
       // напоминаю, что copyWith() сбрасывает поле deal
       final newHistoryRecord = _movingHistoryRecord!.copyWith();
       _movingHistoryRecord!.markDeleted();
       newDeal.addRecord(newHistoryRecord);
 
+      final oldDeal = _movingHistoryRecord!.deal!;
       await di<Storage>().addOrUpdateAndSaveDeal(oldDeal);
       await di<Storage>().addOrUpdateAndSaveDeal(newDeal);
 

@@ -174,15 +174,14 @@ class StorageSyncVm with SimpleChangeNotifier {
   }
 
   void _wsSend(dynamic data) {
-    final msg = '>>>  ${stage.name} =  ' + ((data is Uint8List) ? 'binary data [${data.length}]' : data);
-    _log.inf(msg);
+    _log.inf('>>>  ${_dataToLog(data)}');
     _wsSender!(data);
   }
 
   // Вообще тут нужен конечный автомат на классах, но я поленился, и использую упрощенный подход -
   // ручное формирование/парсинг json-сообщений, управляемый енамом. Прошу понять и простить.
   Future<void> _handleIncoming(dynamic incoming) async {
-    _log.inf('<<<  ' + ((incoming is Uint8List) ? 'binary data [${incoming.length}]' : incoming));
+    _log.inf('<<<  ${_dataToLog(incoming)}');
     try {
       switch (stage) {
         // принимаем время, отправляем json, в ответ ожидаем того же
@@ -282,5 +281,13 @@ class StorageSyncVm with SimpleChangeNotifier {
     } catch (e, s) {
       Err.add(e, s);
     }
+  }
+
+  String _dataToLog(dynamic data) {
+    return (data is Uint8List)
+        ? 'binary data [${data.length}]'
+        : (data is String && data.length > 100)
+        ? data.substring(0, 100) + '...'
+        : data;
   }
 }

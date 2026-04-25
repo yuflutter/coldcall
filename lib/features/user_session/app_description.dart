@@ -30,6 +30,7 @@ const appDescription = '''
 ## Лицензия
 
 MIT
+https://github.com/yuflutter/coldcall
 
 Если приложение оказалось полезным, вы можете связаться с автором по ссылке.
 ''';
