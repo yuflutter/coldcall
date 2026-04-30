@@ -53,7 +53,7 @@ class Deal extends Syncable with DealMappable {
 
   bool get hasCalls => notDeletedAndSortedRecords.any((r) => r.phoneNumber != null);
   bool get hasAudios => notDeletedAndSortedRecords.any((r) => r.audioFileName != null);
-  PhoneNumber? get lastPhoneNumber => notDeletedAndSortedRecords.firstWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;
+  PhoneNumber? get lastPhoneNumber => notDeletedAndSortedRecords.lastWhereOrNull((r) => r.phoneNumber != null)?.phoneNumber;
 
   @override
   void mergeFrom(covariant Deal other) {
