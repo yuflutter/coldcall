@@ -6,16 +6,16 @@ import 'package:sherpa_onnx/sherpa_onnx.dart';
 import 'package:flutter/services.dart';
 
 /// Команды для общения с изолятом
-enum _IsolateCommand { init, start, accept, flush, stop }
+enum _IsolateCommand { init, start, audioChunk, flush, stop }
 
 /// Попытка перевести инференс модели в изолят. Ускорения не заметил. Но хоть интерфейс не фризит.
 class RecognizerServiceSherpaIsolate extends RecognizerService {
   Isolate? _isolate;
 
-  SendPort? _toIsolate;
-  final _fromIsolate = ReceivePort();
+  SendPort? _toIsolatePort;
+  final _fromIsolatePort = ReceivePort();
 
-  final _fromIsolateFlush = ReceivePort(); // ожидаем окончания flushSession)
+  final _fromIsolateFlushPort = ReceivePort(); // ожидаем окончания flushSession)
   Completer<void>? _flushCompleter;
 
   final _transcription = StringBuffer();
@@ -35,15 +35,15 @@ class RecognizerServiceSherpaIsolate extends RecognizerService {
 
     // Запускаем изолят
     _isolate = await Isolate.spawn(_recognizerWorker, {
-      'port': _fromIsolate.sendPort,
-      'flushPort': _fromIsolateFlush.sendPort,
+      'port': _fromIsolatePort.sendPort,
+      'flushPort': _fromIsolateFlushPort.sendPort,
       'modelPath': modelPath,
     });
 
     // Слушаем ответы из изолята
-    _fromIsolate.listen((message) {
+    _fromIsolatePort.listen((message) {
       if (message is SendPort) {
-        _toIsolate = message;
+        _toIsolatePort = message;
       } else if (message is String) {
         // Получили новый кусок текста
         notify(() => _transcription.write('$message '));
@@ -51,23 +51,23 @@ class RecognizerServiceSherpaIsolate extends RecognizerService {
     });
 
     // Слушаем подтверждение flush()
-    _fromIsolateFlush.listen((_) {
+    _fromIsolateFlushPort.listen((_) {
       _flushCompleter?.complete();
     });
 
     // Ждем, пока прокинется SendPort
-    while (_toIsolate == null) {
+    while (_toIsolatePort == null) {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
-    _toIsolate!.send({'cmd': _IsolateCommand.init});
+    _toIsolatePort!.send({'cmd': _IsolateCommand.init});
   }
 
   @override
   void startSession() {
     _transcription.clear();
     _active = true;
-    _toIsolate?.send({'cmd': _IsolateCommand.start});
+    _toIsolatePort?.send({'cmd': _IsolateCommand.start});
     notify(() {});
   }
 
@@ -75,20 +75,20 @@ class RecognizerServiceSherpaIsolate extends RecognizerService {
   FutureOr<void> acceptWaveform(Uint8List audioChunk) {
     // Передаем байты в изолят. Isolate.spawn в современных версиях Dart
     // эффективно передает Uint8List без полного копирования.
-    _toIsolate?.send({'cmd': _IsolateCommand.accept, 'data': audioChunk});
+    _toIsolatePort?.send({'cmd': _IsolateCommand.audioChunk, 'data': audioChunk});
   }
 
   @override
   FutureOr<void> flushSession() async {
     _flushCompleter = Completer<void>();
-    _toIsolate?.send({'cmd': _IsolateCommand.flush});
+    _toIsolatePort?.send({'cmd': _IsolateCommand.flush});
     await _flushCompleter!.future;
   }
 
   @override
   void disposeSession() async {
     _active = false;
-    _toIsolate?.send({'cmd': _IsolateCommand.stop});
+    _toIsolatePort?.send({'cmd': _IsolateCommand.stop});
     _transcription.clear();
     notify(() {});
   }
@@ -96,24 +96,24 @@ class RecognizerServiceSherpaIsolate extends RecognizerService {
   @override
   void dispose() {
     _isolate?.kill();
-    _fromIsolate.close();
+    _fromIsolatePort.close();
     super.dispose();
   }
 }
 
 /// Точка входа в изолят. Вся тяжелая логика тут.
 void _recognizerWorker(Map<String, dynamic> initData) async {
-  final SendPort mainSendPort = initData['port'];
-  final SendPort flushSendPort = initData['flushPort'];
+  final SendPort fromIsolatePort = initData['port'];
+  final SendPort fromIsolateFlushPort = initData['flushPort'];
   final String modelPath = initData['modelPath'];
 
   VoiceActivityDetector? vad;
   OfflineRecognizer? recognizer;
 
-  final childReceivePort = ReceivePort();
-  mainSendPort.send(childReceivePort.sendPort);
+  final toIsolatePort = ReceivePort();
+  fromIsolatePort.send(toIsolatePort.sendPort);
 
-  await for (final message in childReceivePort) {
+  await for (final message in toIsolatePort) {
     final cmd = message['cmd'] as _IsolateCommand;
 
     switch (cmd) {
@@ -152,17 +152,17 @@ void _recognizerWorker(Map<String, dynamic> initData) async {
         // Можно сбросить внутренние буферы VAD, если нужно
         break;
 
-      case _IsolateCommand.accept:
+      case _IsolateCommand.audioChunk:
         final data = message['data'] as Uint8List;
         final samples = SherpaUtils.pcm16ToFloat32(data);
         vad?.acceptWaveform(samples);
-        _processVad(vad, recognizer, mainSendPort);
+        _processVad(vad, recognizer, fromIsolatePort);
         break;
 
       case _IsolateCommand.flush:
         vad?.flush();
-        _processVad(vad, recognizer, mainSendPort);
-        flushSendPort.send(true);
+        _processVad(vad, recognizer, fromIsolatePort);
+        fromIsolateFlushPort.send(true);
         break;
 
       case _IsolateCommand.stop:
@@ -174,7 +174,7 @@ void _recognizerWorker(Map<String, dynamic> initData) async {
 }
 
 /// Вспомогательная функция внутри изолята для обработки сегментов
-void _processVad(VoiceActivityDetector? vad, OfflineRecognizer? recognizer, SendPort replyPort) {
+void _processVad(VoiceActivityDetector? vad, OfflineRecognizer? recognizer, SendPort fromIsolatePort) {
   if (vad == null || recognizer == null) return;
 
   while (!vad.isEmpty()) {
@@ -188,7 +188,7 @@ void _processVad(VoiceActivityDetector? vad, OfflineRecognizer? recognizer, Send
     stream.free();
 
     if (text.isNotEmpty) {
-      replyPort.send(text); // Отправляем текст в главный поток
+      fromIsolatePort.send(text); // Отправляем текст в главный поток
     }
   }
 }
