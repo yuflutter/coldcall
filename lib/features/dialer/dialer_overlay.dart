@@ -1,5 +1,6 @@
 import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/di.dart';
+import 'package:coldcall/core/log.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
@@ -18,6 +19,8 @@ class DialerOverlay extends StatefulWidget {
 class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final _model = widget.model;
 
+  bool _isNumberChanged = false;
+
   bool _appWasInPausedState = false;
 
   late Animation<double> _slideAnimation;
@@ -28,7 +31,8 @@ class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProvider
     super.initState();
 
     // контроллер перенесен в модель, чтобы обеспечить плавность закрытия извне
-    _model.animationController = AnimationController(duration: const Duration(milliseconds: 300), vsync: this)..forward();
+    _model.animationController = AnimationController(duration: const Duration(milliseconds: 300), vsync: this)
+      ..forward();
     _slideAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
@@ -48,7 +52,7 @@ class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProvider
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-    print(state);
+    Log.deb(state);
 
     // открылось системное приложение Телефон
     if (state == .paused) {
@@ -118,41 +122,61 @@ class _DialerOverlayState extends State<DialerOverlay> with SingleTickerProvider
                                 margin: const EdgeInsets.only(top: 10, bottom: 25),
                                 width: 40,
                                 height: 4,
-                                decoration: BoxDecoration(color: Colors.white.withAlpha(100), borderRadius: BorderRadius.circular(2)),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(100),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Gap(15),
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                      decoration: BoxDecoration(color: Colors.green.withAlpha(100), borderRadius: BorderRadius.circular(8)),
-                                      child: TextField(
-                                        controller: _model.phoneEditingController,
-                                        autofocus: (_model.initialPhone == null),
-                                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                                        textAlign: TextAlign.center,
-                                        keyboardType: TextInputType.phone,
-                                        inputFormatters: [di<AppConfig>().phoneNumberFormatter],
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Введите номер',
-                                          hintStyle: TextStyle(color: Colors.grey, fontWeight: .normal),
+                              Padding(
+                                padding: .fromLTRB(15, 0, 15, 0),
+                                child: Column(
+                                  crossAxisAlignment: .start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withAlpha(100),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: TextField(
+                                              controller: _model.phoneEditingController,
+                                              autofocus: (_model.initialPhone == null),
+                                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                                              textAlign: TextAlign.center,
+                                              keyboardType: TextInputType.phone,
+                                              inputFormatters: [di<AppConfig>().phoneNumberFormatter],
+                                              decoration: const InputDecoration(
+                                                border: InputBorder.none,
+                                                hintText: 'Введите номер',
+                                                hintStyle: TextStyle(color: Colors.grey, fontWeight: .normal),
+                                              ),
+                                              onChanged: (_) => setState(() => _isNumberChanged = true),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        Gap(15),
+                                        (!_model.isCalling)
+                                            ? FloatingActionButton(
+                                                onPressed: () => _model.startCall(context),
+                                                child: Icon(Icons.call),
+                                              )
+                                            : FloatingActionButton(onPressed: null, child: Icon(Icons.call)),
+                                        // : FloatingActionButton(onPressed: () => _model.closeDialer(false), child: Icon(Icons.close)),
+                                      ],
                                     ),
-                                  ),
-                                  Gap(15),
-                                  (!_model.isCalling)
-                                      ? FloatingActionButton(onPressed: () => _model.startCall(context), child: Icon(Icons.call))
-                                      : FloatingActionButton(onPressed: null, child: Icon(Icons.call)),
-                                  // : FloatingActionButton(onPressed: () => _model.closeDialer(false), child: Icon(Icons.close)),
-                                  Gap(15),
-                                ],
+                                    if (_model.initialPhone?.name?.isNotEmpty == true && !_isNumberChanged) ...[
+                                      Gap(10),
+                                      Text('(${_model.initialPhone!.name!})', style: TextStyle(color: Colors.yellow)),
+                                    ] else
+                                      Gap(10),
+                                  ],
+                                ),
                               ),
-                              Gap(33),
+                              Gap(23),
                             ],
                           ),
                         ),

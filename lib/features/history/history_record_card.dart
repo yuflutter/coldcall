@@ -150,7 +150,10 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                     ),
                                     TimeDateText(date: _record.startTime, fontSize: 16),
                                     Spacer(),
-                                    Text(formatDuration(_record.duration), style: TextStyle(fontSize: 14, color: Colors.white70)),
+                                    Text(
+                                      formatDuration(_record.duration),
+                                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                                    ),
                                     Gap(10),
                                   ],
                                 ),
@@ -159,7 +162,9 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                             if (_record.phoneNumber != null) ...[_buildPhoneNumber(_record), Gap(3)],
                             if (_record.note?.isNotEmpty == true) ...[
                               Padding(
-                                padding: (_record.phoneNumber?.name?.isNotEmpty == true) ? .fromLTRB(0, 3, 0, 0) : .zero,
+                                padding: (_record.phoneNumber?.name?.isNotEmpty == true)
+                                    ? .fromLTRB(0, 3, 0, 0)
+                                    : .zero,
                                 child: Text(_record.note!, style: TextStyle(fontSize: 15)),
                               ),
                               Gap(3),
@@ -167,7 +172,12 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                             if (_record.textTranscription != null) ...[
                               Padding(
                                 padding: .fromLTRB(0, 0, 5, 0),
-                                child: Text(_record.textTranscription!, maxLines: 3, overflow: .ellipsis, style: TextStyle(fontSize: 15)),
+                                child: Text(
+                                  _record.textTranscription!,
+                                  maxLines: 3,
+                                  overflow: .ellipsis,
+                                  style: TextStyle(fontSize: 15),
+                                ),
                               ),
                               Gap(3),
                             ],
@@ -193,13 +203,22 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                 PopupMenuItem(onTap: _startNoteEditing, child: Text('Примечание к звонку')),
                                 PopupMenuItem(onTap: _startNameEditing, child: Text('Имя контакта')),
                               ],
-                              PopupMenuItem(onTap: () => _startMovingHistoryRecord(_record), child: Text('Перенести...')),
+                              PopupMenuItem(
+                                onTap: () => _startMovingHistoryRecord(_record),
+                                child: Text('Перенести...'),
+                              ),
                               if (_record.textTranscription != null) ...[
-                                PopupMenuItem(onTap: () => _model.downloadAudio(_record), child: Text('Скачать аудиофайл')),
+                                PopupMenuItem(
+                                  onTap: () => _model.downloadAudio(_record),
+                                  child: Text('Скачать аудиофайл'),
+                                ),
                                 // PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
                                 PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
                               ],
-                              PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                              PopupMenuItem(
+                                onTap: () => _showDeleteRecordDialog(context, _record),
+                                child: Text('Удалить'),
+                              ),
                             ],
                           ),
                         ],
@@ -267,7 +286,10 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                       _buildTableRow('Начало:', TimeDateText(date: _record.startTime, fontSize: 15)),
                                       _buildTableRow(
                                         'Длительность:',
-                                        Text(formatDuration(record.duration), style: TextStyle(fontSize: 15, color: Colors.white70)),
+                                        Text(
+                                          formatDuration(record.duration),
+                                          style: TextStyle(fontSize: 15, color: Colors.white70),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -293,10 +315,16 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                                 Spacer(),
                                 PopupMenuButton(
                                   itemBuilder: (context) => [
-                                    PopupMenuItem(onTap: () => _model.downloadAudio(record), child: Text('Скачать аудиофайл')),
+                                    PopupMenuItem(
+                                      onTap: () => _model.downloadAudio(record),
+                                      child: Text('Скачать аудиофайл'),
+                                    ),
                                     // PopupMenuItem(onTap: _improveRecognition, child: Text('Улучшить расшифровку')),
                                     PopupMenuItem(onTap: _aiQuery, child: Text('Краткий пересказ ИИ')),
-                                    PopupMenuItem(onTap: () => _showDeleteRecordDialog(context, _record), child: Text('Удалить')),
+                                    PopupMenuItem(
+                                      onTap: () => _showDeleteRecordDialog(context, _record),
+                                      child: Text('Удалить'),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -356,7 +384,9 @@ class _HistoryRecordCardState extends State<HistoryRecordCard> {
                 onTap: onTap,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
-                  child: (value is Widget) ? value : Text(value.toString(), style: _valueStyle.copyWith(color: Colors.greenAccent)),
+                  child: (value is Widget)
+                      ? value
+                      : Text(value.toString(), style: _valueStyle.copyWith(color: Colors.greenAccent)),
                 ),
               ),
       ],
@@ -439,7 +469,9 @@ class AudioPlayerControl extends StatelessWidget {
                     0,
                     model.currentPlayingDuration.inMilliseconds.toDouble(),
                   ),
-                  max: model.currentPlayingDuration.inMilliseconds > 0 ? model.currentPlayingDuration.inMilliseconds.toDouble() : 1,
+                  max: model.currentPlayingDuration.inMilliseconds > 0
+                      ? model.currentPlayingDuration.inMilliseconds.toDouble()
+                      : 1,
                   onChanged: (v) => model.seekAudioTo(Duration(milliseconds: v.toInt())),
                 ),
               ),
