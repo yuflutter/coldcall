@@ -59,94 +59,8 @@ class _DealCardState extends State<DealCard> {
           builder: (context, _) {
             return Column(
               children: [
-                Builder(
-                  builder: (headContext) {
-                    return InkWell(
-                      onTap: () => _expandCollapseDealCard(_deal),
-                      onLongPress: () => _showDeleteDealDialog(context, _deal),
-                      child: Card(
-                        margin: .fromLTRB(0, 4, 0, 4),
-                        color: Colors.white24,
-                        child: Padding(
-                          padding: const .fromLTRB(10, 0, 0, 5),
-                          child: Column(
-                            crossAxisAlignment: .stretch,
-                            children: [
-                              Row(
-                                crossAxisAlignment: .start,
-                                children: [
-                                  Expanded(
-                                    child: Padding(
-                                      padding: .fromLTRB(0, 7, 0, 0),
-                                      child: Stack(
-                                        children: [
-                                          RichText(
-                                            // maxLines: 3,
-                                            // overflow: .ellipsis,
-                                            text: TextSpan(
-                                              children: [
-                                                WidgetSpan(
-                                                  child: Row(
-                                                    mainAxisSize: .min,
-                                                    children: [
-                                                      if (_deal.hasCalls) Icon(Icons.call, size: 14),
-                                                      if (_deal.hasAudios) Icon(Icons.mic, size: 17),
-                                                      if (_deal.hasCalls || _deal.hasAudios) Gap(8),
-                                                    ],
-                                                  ),
-                                                ),
-                                                TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Column(
-                                    children: [
-                                      PopupMenuButton(
-                                        itemBuilder: (context) => [
-                                          if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
-                                            PopupMenuItem(
-                                              onTap: () => _model.stopMovingHistoryRecord(_deal),
-                                              child: Text('Вставить сюда...'),
-                                            ),
-                                          PopupMenuItem(
-                                            onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
-                                            child: Text('Позвонить'),
-                                          ),
-                                          PopupMenuItem(
-                                            onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
-                                            child: Text('Записать'),
-                                          ),
-                                          PopupMenuItem(onTap: () => _startTitleEditing(_deal), child: Text('Изменить описание')),
-                                          PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const .fromLTRB(0, 3, 7, 0),
-                                child: Row(
-                                  children: [
-                                    Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
-                                    Spacer(),
-                                    if (_deal.lastModified != _deal.created)
-                                      Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                if (_model.currentExpandedDealId == _deal.id) _buildDealRecordsList(_deal),
+                _buildDealHeader(),
+                if (_model.currentExpandedDealId == _deal.id) ...[_buildDealRecordsList(), _buildDealHeader()],
               ],
             );
           },
@@ -155,9 +69,102 @@ class _DealCardState extends State<DealCard> {
     );
   }
 
-  Widget _buildDealRecordsList(Deal deal) {
+  Widget _buildDealHeader() {
+    return Builder(
+      builder: (headContext) {
+        return InkWell(
+          onTap: () => _expandCollapseDealCard(_deal),
+          onLongPress: () => _showDeleteDealDialog(context, _deal),
+          child: Card(
+            margin: .fromLTRB(0, 4, 0, 4),
+            color: Colors.white24,
+            child: Padding(
+              padding: .fromLTRB(10, 0, 0, 5),
+              child: Column(
+                crossAxisAlignment: .stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: .start,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: .fromLTRB(0, 7, 0, 0),
+                          child: Stack(
+                            children: [
+                              RichText(
+                                // maxLines: 3,
+                                // overflow: .ellipsis,
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      child: Row(
+                                        mainAxisSize: .min,
+                                        children: [
+                                          if (_deal.hasCalls) Icon(Icons.call, size: 14),
+                                          if (_deal.hasAudios) Icon(Icons.mic, size: 17),
+                                          if (_deal.hasCalls || _deal.hasAudios) Gap(8),
+                                        ],
+                                      ),
+                                    ),
+                                    TextSpan(text: _deal.title, style: TextStyle(fontSize: 15)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          PopupMenuButton(
+                            itemBuilder: (context) => [
+                              if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
+                                PopupMenuItem(
+                                  onTap: () => _model.stopMovingHistoryRecord(_deal),
+                                  child: Text('Вставить сюда...'),
+                                ),
+                              PopupMenuItem(
+                                onTap: () =>
+                                    _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
+                                child: Text('Позвонить'),
+                              ),
+                              PopupMenuItem(
+                                onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
+                                child: Text('Записать'),
+                              ),
+                              PopupMenuItem(onTap: () => _startTitleEditing(_deal), child: Text('Изменить описание')),
+                              PopupMenuItem(onTap: () => _showDeleteDealDialog(context, _deal), child: Text('Удалить')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const .fromLTRB(0, 3, 7, 0),
+                    child: Row(
+                      children: [
+                        Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
+                        Spacer(),
+                        if (_deal.lastModified != _deal.created)
+                          Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDealRecordsList() {
     return Column(
-      children: [...deal.notDeletedAndSortedRecords.map((record) => HistoryRecordCard(record: record, key: Key(record.id)))],
+      children: [
+        ..._deal.notDeletedAndSortedRecords.map((record) => HistoryRecordCard(record: record, key: Key(record.id))),
+      ],
     );
   }
 
