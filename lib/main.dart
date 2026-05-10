@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/dart_mappable_settings.dart';
@@ -12,6 +11,7 @@ import 'package:coldcall/features/user_session/_user_session_vm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:window_manager/window_manager.dart';
 import 'features/dialer/_camera_dialer_screen.dart';
 import 'features/history/_history_screen.dart';
 import 'features/user_session/_user_session_screen.dart';
@@ -19,11 +19,27 @@ import 'features/user_session/_user_session_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Регистрируем мапперы сериализатора
+  registerJsonMappers();
+
   // Устанавливаем только портретную ориентацию
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Регистрируем мапперы сериализатора
-  registerJsonMappers();
+  // Устанавливаем вертикальное окно в линукс
+  await windowManager.ensureInitialized();
+  final windowOptions = const WindowOptions(
+    size: Size(400, 800),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
+  );
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+    // await windowManager.setResizable(false); // Запрещаем менять размер
+    // await windowManager.setMaximizable(false); // Запрещаем разворачивать на весь экран
+  });
 
   runApp(const MyApp());
 }
@@ -100,6 +116,14 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    _errSubs = di<Err>().errStream.listen((e) {
+      if (context.mounted) showErrorPresenterPopup(context, e);
+    });
+    super.initState();
+  }
+
   void _selectPage(int pageIndex) {
     if (pageIndex != _currentIndex) {
       setState(() {
@@ -107,14 +131,6 @@ class _MainScreenState extends State<MainScreen> {
         _currentScreen = _screens[pageIndex]();
       });
     }
-  }
-
-  @override
-  void initState() {
-    _errSubs = di<Err>().errStream.listen((e) {
-      if (context.mounted) showErrorPresenterPopup(context, e);
-    });
-    super.initState();
   }
 
   @override
