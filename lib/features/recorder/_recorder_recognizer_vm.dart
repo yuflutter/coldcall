@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/show_toastification.dart';
@@ -10,6 +10,7 @@ import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/features/recorder/recognizer_service.dart';
 import 'package:coldcall/features/recorder/recorder_session.dart';
 import 'package:coldcall/storage/storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -37,7 +38,9 @@ class RecorderRecognizerVm with SimpleChangeNotifier {
   Future<void> init() async {
     try {
       await _recognizer.init();
-      await Permission.microphone.request();
+      if (!Platform.isLinux && !kIsWeb) {
+        await Permission.microphone.request();
+      }
     } catch (e, s) {
       Err.add(e, s);
     }

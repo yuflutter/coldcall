@@ -69,18 +69,28 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
 
                         switch (_model.status.role) {
                           .server => switch (_model.stage) {
-                            .qrScaning => Column(
-                              children: [
-                                Spacer(flex: 2),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
-                                  child: QrImageView(data: _model.qrServerUrl),
-                                ),
-                                Text(_model.qrServerUrl, style: TextStyle(color: Colors.grey)),
-                                Spacer(),
-                                Text(vpnMsg, style: TextStyle(color: Colors.black)),
-                                Spacer(),
-                              ],
+                            .qrScaning => LayoutBuilder(
+                              builder: (context, constraints) {
+                                return Column(
+                                  crossAxisAlignment: .center,
+                                  children: [
+                                    Spacer(flex: 2),
+                                    Center(
+                                      child: SizedBox(
+                                        width: (constraints.maxWidth >= constraints.maxHeight) ? constraints.maxHeight * 0.8 : double.infinity,
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                                          child: QrImageView(data: _model.qrServerUrl),
+                                        ),
+                                      ),
+                                    ),
+                                    Text(_model.qrServerUrl, style: TextStyle(color: Colors.grey)),
+                                    Spacer(),
+                                    Text(vpnMsg, style: TextStyle(color: Colors.black)),
+                                    Spacer(),
+                                  ],
+                                );
+                              },
                             ),
                             .netConecting => Center(
                               child: Column(

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -37,9 +37,10 @@ class RecorderSession {
 
   /// Начинает запись в файл, возвращает аудиострим для онлайн-рекогнайзера
   Future<Stream<Uint8List>> startRecording() async {
-    final micStatus = await Permission.microphone.request();
-    if (!micStatus.isGranted) throw 'Разрешение к микрофону не предоставлено';
-
+    if (!Platform.isLinux && !kIsWeb) {
+      final micStatus = await Permission.microphone.request();
+      if (!micStatus.isGranted) throw 'Разрешение к микрофону не предоставлено';
+    }
     final dir = await getApplicationDocumentsDirectory();
     _startTime = DateTime.now();
     _audioFilePath = '${dir.path}/audio_${_startTime.microsecondsSinceEpoch}.$_audioFileExt';

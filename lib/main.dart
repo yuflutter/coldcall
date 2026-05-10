@@ -44,11 +44,7 @@ class _MyAppState extends State<MyApp> {
       title: 'ColdCall',
       debugShowCheckedModeBanner: false,
 
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
       supportedLocales: [Locale('ru', ''), Locale('en', '')],
 
       theme: ThemeData(
@@ -104,6 +100,15 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  void _selectPage(int pageIndex) {
+    if (pageIndex != _currentIndex) {
+      setState(() {
+        _currentIndex = pageIndex;
+        _currentScreen = _screens[pageIndex]();
+      });
+    }
+  }
+
   @override
   void initState() {
     _errSubs = di<Err>().errStream.listen((e) {
@@ -122,34 +127,62 @@ class _MainScreenState extends State<MainScreen> {
           _currentIndex = 1;
           _currentScreen = RecorderRecognizerScreen(deal: deal);
         }
-        return Scaffold(
-          body: _currentScreen,
-          bottomNavigationBar: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              if (index != _currentIndex) {
-                setState(() {
-                  _currentIndex = index;
-                  _currentScreen = _screens[index]();
-                });
-              }
-            },
-            items: [
-              BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Позвонить'),
-              BottomNavigationBarItem(
-                icon: SimpleListenableBuilder(
-                  listenable: di<RecorderRecognizerVm>(), // ищем по суперклассу
-                  builder: (context, model, _) {
-                    return Badge(isLabelVisible: model.isSessionActive, child: Icon(Icons.mic));
-                  },
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = (constraints.maxWidth >= constraints.maxHeight);
+            if (isDesktop) {
+              return Scaffold(
+                body: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    NavigationRail(
+                      selectedIndex: _currentIndex,
+                      onDestinationSelected: _selectPage,
+                      labelType: NavigationRailLabelType.all,
+                      destinations: [
+                        NavigationRailDestination(icon: Icon(Icons.camera), label: Text('Позвонить')),
+                        NavigationRailDestination(
+                          icon: SimpleListenableBuilder(
+                            listenable: di<RecorderRecognizerVm>(), // ищем по суперклассу
+                            builder: (context, model, _) {
+                              return Badge(isLabelVisible: model.isSessionActive, child: Icon(Icons.mic));
+                            },
+                          ),
+                          label: Text('Записать'),
+                        ),
+                        NavigationRailDestination(icon: Icon(Icons.history), label: Text('История')),
+                        NavigationRailDestination(icon: Icon(Icons.settings), label: Text('Настройки')),
+                      ],
+                    ),
+                    Expanded(child: _currentScreen),
+                  ],
                 ),
-                label: 'Записать',
-              ),
-              BottomNavigationBarItem(icon: Icon(Icons.history), label: 'История'),
-              BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Настройки'),
-            ],
-          ),
+              );
+            } else {
+              return Scaffold(
+                body: _currentScreen,
+                bottomNavigationBar: BottomNavigationBar(
+                  type: BottomNavigationBarType.fixed,
+                  currentIndex: _currentIndex,
+                  onTap: _selectPage,
+                  items: [
+                    BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Позвонить'),
+                    BottomNavigationBarItem(
+                      icon: SimpleListenableBuilder(
+                        listenable: di<RecorderRecognizerVm>(), // ищем по суперклассу
+                        builder: (context, model, _) {
+                          return Badge(isLabelVisible: model.isSessionActive, child: Icon(Icons.mic));
+                        },
+                      ),
+                      label: 'Записать',
+                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.history), label: 'История'),
+                    BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Настройки'),
+                  ],
+                ),
+              );
+            }
+          },
         );
       },
     );
