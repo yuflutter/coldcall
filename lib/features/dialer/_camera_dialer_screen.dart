@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 
 class CameraDialerScreen extends StatefulWidget {
+  const CameraDialerScreen({super.key});
+
   @override
   createState() => _CameraDialerScreenState();
 }
@@ -42,8 +44,10 @@ class _CameraDialerScreenState extends State<CameraDialerScreen> with SingleTick
                 // это не фатальная ошибка, можно вручную номер набрать
                 errorBuilder: (e, _) => Stack(
                   children: [
-                    Center(child: Text(e.toString())),
-
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Center(child: Text(e.toString())),
+                    ),
                     // Набор номера вручную
                     if (!_model.isDialerShown)
                       Positioned(

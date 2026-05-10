@@ -9,6 +9,7 @@ import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
 import 'package:coldcall/features/dialer/dialer_vm.dart';
 import 'package:coldcall/features/dialer/phone_detector_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -62,22 +63,22 @@ class CameraDialerVm with SimpleChangeNotifier {
   Future<void> init(BuildContext context) async {
     _context = context;
 
-    final cameraStatus = await Permission.camera.request();
-    if (!cameraStatus.isGranted) {
-      throw 'Нет разрешения на использование камеры';
-    } else {
-      try {
-        final cameras = await availableCameras();
-        if (cameras.isEmpty) {
-          throw 'Камера не найдена на устройстве';
-        } else {
-          cameraController = CameraController(cameras[0], ResolutionPreset.high, enableAudio: false);
-          await cameraController!.initialize();
-          _startVideoProcessing();
-        }
-      } catch (e) {
-        throw 'Ошибка инициализации камеры: $e';
+    if (!Platform.isLinux && !kIsWeb) {
+      final cameraStatus = await Permission.camera.request();
+      if (!cameraStatus.isGranted) throw 'Нет разрешения на использование камеры';
+    }
+
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        throw 'Камера не найдена на устройстве';
+      } else {
+        cameraController = CameraController(cameras[0], ResolutionPreset.high, enableAudio: false);
+        await cameraController!.initialize();
+        _startVideoProcessing();
       }
+    } catch (e) {
+      throw 'Ошибка инициализации камеры. Распознавание номеров недоступно, но можно набрать номер вручную, или использовать историю.\n$e';
     }
   }
 
