@@ -47,7 +47,6 @@ dependencies:
   intl: ^0.20.2
   dart_mappable: ^4.7.0
   record: ^6.2.0
-  vosk_flutter_service: ^0.1.0
   sherpa_onnx: ^1.10.30
   audioplayers: ^6.6.0
   gap: ^3.0.1
@@ -60,6 +59,7 @@ dependencies:
   web_socket_channel: ^3.0.3
   file_picker: ^10.0.0
   meta: ^1.17.0
+# vosk_flutter_service: ^0.1.0
 
 dev_dependencies:
   flutter_test:
