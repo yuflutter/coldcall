@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:coldcall/app_config.dart';
 import 'package:coldcall/core/err.dart';
 import 'package:coldcall/core/dart_mappable_settings.dart';
@@ -26,20 +27,22 @@ void main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // Устанавливаем вертикальное окно в линукс
-  await windowManager.ensureInitialized();
-  final windowOptions = const WindowOptions(
-    size: Size(400, 800),
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
-  );
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-    // await windowManager.setResizable(false); // Запрещаем менять размер
-    // await windowManager.setMaximizable(false); // Запрещаем разворачивать на весь экран
-  });
+  if (Platform.isLinux) {
+    await windowManager.ensureInitialized();
+    final windowOptions = const WindowOptions(
+      size: Size(400, 800),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+      // await windowManager.setResizable(false); // Запрещаем менять размер
+      // await windowManager.setMaximizable(false); // Запрещаем разворачивать на весь экран
+    });
+  }
 
   runApp(const MyApp());
 }

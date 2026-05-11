@@ -61,8 +61,17 @@ class _DealCardState extends State<DealCard> {
           builder: (context, _) {
             return Column(
               children: [
-                _buildHeader(.top),
-                if (_model.currentExpandedDealId == _deal.id) ...[_buildRecordsList(), _buildHeader(.bottom)],
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return SizeTransition(sizeFactor: animation, axisAlignment: 1.0, child: child);
+                  },
+                  // Используем уникальный ключ, чтобы AnimatedSwitcher заметил смену виджетов
+                  child: (_model.currentExpandedDealId == _deal.id)
+                      ? Column(key: ValueKey('expanded'), children: [_buildHeader(.top), _buildRecordsList()])
+                      : const SizedBox.shrink(key: ValueKey('collapsed')),
+                ),
+                _buildHeader(.bottom),
               ],
             );
           },
@@ -119,18 +128,12 @@ class _DealCardState extends State<DealCard> {
                       PopupMenuButton(
                         itemBuilder: (context) => [
                           if (_model.movingHistoryRecord != null && _model.movingHistoryRecord!.deal != _deal)
-                            PopupMenuItem(
-                              onTap: () => _model.stopMovingHistoryRecord(_deal),
-                              child: Text('Вставить сюда...'),
-                            ),
+                            PopupMenuItem(onTap: () => _model.stopMovingHistoryRecord(_deal), child: Text('Вставить сюда...')),
                           PopupMenuItem(
                             onTap: () => _model.showDialer(context, deal: _deal, phoneNumber: _deal.lastPhoneNumber),
                             child: Text('Позвонить'),
                           ),
-                          PopupMenuItem(
-                            onTap: () => di<UserSessionVm>().startRecordForDeal(_deal),
-                            child: Text('Записать'),
-                          ),
+                          PopupMenuItem(onTap: () => di<UserSessionVm>().startRecordForDeal(_deal), child: Text('Записать')),
                           PopupMenuItem(onTap: _startTitleEditing, child: Text('Изменить описание')),
                           PopupMenuItem(onTap: _showDeleteDealDialog, child: Text('Удалить')),
                         ],
@@ -145,8 +148,7 @@ class _DealCardState extends State<DealCard> {
                   children: [
                     Text(dateTimeFormat.format(_deal.created), style: _dateTextStyle),
                     Spacer(),
-                    if (_deal.lastModified != _deal.created)
-                      Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
+                    if (_deal.lastModified != _deal.created) Text(dateTimeFormat.format(_deal.lastModified), style: _dateTextStyle),
                   ],
                 ),
               ),
@@ -159,9 +161,7 @@ class _DealCardState extends State<DealCard> {
 
   Widget _buildRecordsList() {
     return Column(
-      children: [
-        ..._deal.notDeletedAndSortedRecords.map((record) => HistoryRecordCard(record: record, key: Key(record.id))),
-      ],
+      children: [..._deal.notDeletedAndSortedRecords.map((record) => HistoryRecordCard(record: record, key: Key(record.id)))],
     );
   }
 
@@ -177,16 +177,10 @@ class _DealCardState extends State<DealCard> {
           mainAxisSize: .min,
           crossAxisAlignment: .start,
           children: [
-            Text(
-              'Вы уверены, что хотите удалить дело от ${timeDateFormat.format(_deal.created)}?',
-              style: const TextStyle(color: Colors.white70),
-            ),
+            Text('Вы уверены, что хотите удалить дело от ${timeDateFormat.format(_deal.created)}?', style: const TextStyle(color: Colors.white70)),
             if (_deal.notDeletedAndSortedRecords.isNotEmpty) ...[
               Gap(15),
-              Text(
-                'Внимание!!!\nДело содержит ${_deal.notDeletedAndSortedRecords.length} записей истории!',
-                style: TextStyle(color: Colors.red),
-              ),
+              Text('Внимание!!!\nДело содержит ${_deal.notDeletedAndSortedRecords.length} записей истории!', style: TextStyle(color: Colors.red)),
             ],
           ],
         ),
