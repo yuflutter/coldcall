@@ -91,7 +91,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                         ),
                                       ),
                                       Container(
-                                        padding: .fromLTRB(15, 10, 15, 10),
+                                        padding: .fromLTRB(15, 15, 15, 10),
                                         decoration: BoxDecoration(
                                           color: Colors.black,
                                           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
