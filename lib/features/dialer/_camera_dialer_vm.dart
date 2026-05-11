@@ -29,7 +29,7 @@ class CameraDialerVm with SimpleChangeNotifier {
   DetectedPhoneNumber? selectedPhone;
 
   String? frozenFramePath; // Путь к замороженному кадру
-  BuildContext? _context; // нужен для получения размера экрана (используется для работы прицела)
+  WeakReference<BuildContext>? _context; // нужен для получения размера экрана (используется для работы прицела)
 
   final _phoneDetector = PhoneDetectorService();
   Timer? _videoProcessingTimer;
@@ -60,7 +60,7 @@ class CameraDialerVm with SimpleChangeNotifier {
     super.dispose();
   }
 
-  Future<void> init(BuildContext context) async {
+  Future<void> init(WeakReference<BuildContext> context) async {
     _context = context;
 
     if (!Platform.isLinux && !kIsWeb) {
@@ -151,10 +151,10 @@ class CameraDialerVm with SimpleChangeNotifier {
   }
 
   DetectedPhoneNumber? _getPhoneInCrosshair(List<DetectedPhoneNumber> phones) {
-    if (cameraController == null || !cameraController!.value.isInitialized || _context?.mounted != true) return null;
+    if (cameraController == null || !cameraController!.value.isInitialized || _context?.target?.mounted != true) return null;
 
     final cameraSize = cameraController!.value.previewSize!;
-    final size = MediaQuery.of(_context!).size;
+    final size = MediaQuery.of(_context!.target!).size;
     final double scaleX = size.width / cameraSize.height;
     final double scaleY = size.height / cameraSize.width;
 
@@ -210,7 +210,7 @@ class CameraDialerVm with SimpleChangeNotifier {
       dialerOverlayModel = null;
     });
 
-    if (_context!.mounted && isCallEnded) showToastification(_context!, 'Звонок сохранен в историю');
+    if (_context?.target?.mounted == true && isCallEnded) showToastification(_context!.target!, 'Звонок сохранен в историю');
   }
 
   void _deleteFrameFile(String? framePath) async {

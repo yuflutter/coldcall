@@ -16,7 +16,7 @@ class CameraDialerScreen extends StatefulWidget {
 
 class _CameraDialerScreenState extends State<CameraDialerScreen> with SingleTickerProviderStateMixin {
   late final _model = CameraDialerVm();
-  late final _initFuture = _model.init(context);
+  late final _initFuture = _model.init(WeakReference(context));
 
   final _cameraPreviewKey = GlobalKey();
   Size? _cameraPreviewSize;
