@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'dart:ui';
-
 import 'package:coldcall/core/dart_mappable_settings.dart';
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/log.dart';
 import 'package:coldcall/entities/syncable.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/phone_numbers.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:path_provider/path_provider.dart';
 
 part 'history_record.mapper.dart';
 
@@ -105,8 +105,8 @@ class HistoryRecord extends Syncable with HistoryRecordMappable {
 
   String? get audioFileName => _audioFileName;
   Future<String>? audioFilePath() async {
-    final path = (await getApplicationDocumentsDirectory()).path;
-    return '$path/$_audioFileName';
+    final dir = (await di<Storage>().storageDir());
+    return '$dir/$_audioFileName';
   }
 
   String? get textTranscription => _textTranscription;

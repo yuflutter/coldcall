@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:coldcall/core/di.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 class RecorderResult {
@@ -41,9 +42,9 @@ class RecorderSession {
       final micStatus = await Permission.microphone.request();
       if (!micStatus.isGranted) throw 'Разрешение к микрофону не предоставлено';
     }
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = (await di<Storage>().storageDir());
     _startTime = DateTime.now();
-    _audioFilePath = '${dir.path}/audio_${_startTime.microsecondsSinceEpoch}.$_audioFileExt';
+    _audioFilePath = '$dir/audio_${_startTime.microsecondsSinceEpoch}.$_audioFileExt';
 
     // Открываем файл и пишем placeholder-заголовок (размер допишем при остановке)
     _fileSink = File(_audioFilePath).openWrite();

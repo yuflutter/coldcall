@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:coldcall/core/di.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 class SherpaUtils {
   static const _modelFolder = 'assets';
 
   static Future<String> copyAssetsToDocuments(List<String> fileNames) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final targetDir = Directory('${dir.path}/$_modelFolder');
+    final dir = (await di<Storage>().storageDir());
+    final targetDir = Directory('$dir/$_modelFolder');
 
     if (!await targetDir.exists()) {
       await targetDir.create(recursive: true);

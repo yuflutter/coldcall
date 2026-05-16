@@ -11,7 +11,6 @@ import 'package:coldcall/entities/sync_status.dart';
 import 'package:coldcall/features/history/_history_vm.dart';
 import 'package:coldcall/storage/storage.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 // Вообще тут нужен конечный автомат на классах, но я поленился. Прошу понять и простить.
@@ -36,7 +35,7 @@ class StorageSyncVm with SimpleChangeNotifier {
 
   void Function(dynamic)? _wsSender;
 
-  late final String _localFilePath;
+  late final String _localFileDir;
   List<String>? _missingFileNames;
 
   @override
@@ -48,7 +47,7 @@ class StorageSyncVm with SimpleChangeNotifier {
   }
 
   Future<void> init() async {
-    _localFilePath = (await getApplicationDocumentsDirectory()).path;
+    _localFileDir = (await di<Storage>().storageDir());
 
     status = di<Storage>().lastSyncStatus;
 
@@ -205,7 +204,7 @@ class StorageSyncVm with SimpleChangeNotifier {
           notify(() => stage = .missingFilesSwap);
 
           for (final fileName in missingFileNames) {
-            final file = File('$_localFilePath/$fileName');
+            final file = File('$_localFileDir/$fileName');
             if (file.existsSync()) {
               _wsSend(await file.readAsBytes());
             } else {
@@ -220,7 +219,7 @@ class StorageSyncVm with SimpleChangeNotifier {
           if (incoming is Uint8List) {
             if (_missingFileNames!.isNotEmpty) {
               final fileName = _missingFileNames!.removeAt(0);
-              final file = File('$_localFilePath/$fileName');
+              final file = File('$_localFileDir/$fileName');
               await file.writeAsBytes(incoming);
             } else {
               throw 'Получен лишний файл';

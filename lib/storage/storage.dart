@@ -29,6 +29,8 @@ class Storage with SimpleChangeNotifier {
   late SyncStatus _lastSyncStatus;
   SyncStatus get lastSyncStatus => _lastSyncStatus;
 
+  Future<String> storageDir() async => (await getApplicationDocumentsDirectory()).path + '/coldcall';
+
   late String _storageFilePath;
   late final _log = Log('$runtimeType');
 
@@ -43,8 +45,8 @@ class Storage with SimpleChangeNotifier {
         _lastSyncStatus = SyncStatus();
       }
 
-      final dir = await getApplicationDocumentsDirectory();
-      _storageFilePath = '${dir.path}/$_storageFileName';
+      final dir = await storageDir();
+      _storageFilePath = '$dir/$_storageFileName';
       final file = File(_storageFilePath);
       if (file.existsSync()) {
         try {
