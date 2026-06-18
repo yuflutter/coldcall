@@ -141,4 +141,75 @@ class Storage with SimpleChangeNotifier {
   void mergeAndSavePhoneNumber(PhoneNumber otherPhone) {
     _phoneBook.merge(otherPhone);
   }
+
+  /// Сжатие базы данных:
+  /// - удаляет записи с флагом deleted из _deals и _phoneBook
+  /// - удаляет аудиофайлы, на которые нет актуальных (неудалённых) ссылок
+  /// Возвращает статистику: количество удалённых записей и файлов.
+  Future<StorageCompressResult> compress() async {
+    int dealsRemoved = 0;
+    int phoneBookRemoved = 0;
+    int audioFilesRemoved = 0;
+
+    // 1. Собираем имена аудиофайлов, на которые есть актуальные (неудалённые) ссылки
+    final referencedAudioFiles = <String>{};
+    for (final deal in _deals.notDeleted) {
+      for (final record in deal.notDeletedAndSortedRecords) {
+        if (record.audioFileName != null) {
+          referencedAudioFiles.add(record.audioFileName!);
+        }
+      }
+    }
+
+    // 2. Удаляем аудиофайлы без актуальных ссылок
+    final dir = await storageDir();
+    final directory = Directory(dir);
+    if (directory.existsSync()) {
+      final audioExtensions = {'.m4a', '.mp3', '.wav', '.aac', '.ogg', '.amr'};
+      for (final entity in directory.listSync()) {
+        if (entity is File) {
+          final ext = entity.path.substring(entity.path.lastIndexOf('.')).toLowerCase();
+          if (audioExtensions.contains(ext)) {
+            final fileName = entity.path.split('/').last;
+            if (!referencedAudioFiles.contains(fileName)) {
+              try {
+                await entity.delete();
+                audioFilesRemoved++;
+                _log.inf('compress: deleted orphaned audio file "$fileName"');
+              } catch (e) {
+                _log.war('compress: failed to delete audio file "$fileName": $e');
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Убираем помеченные на удаление записи из _deals
+    final newDeals = SyncableList<Deal>(_deals.notDeleted.toList());
+    dealsRemoved = _deals.all.where((d) => d.deleted).length;
+    _deals = newDeals;
+
+    // 4. Убираем помеченные на удаление записи из _phoneBook
+    final activePhoneNumbers = _phoneBook.notDeleted.toList();
+    phoneBookRemoved = _phoneBook.all.where((p) => p.deleted).length;
+    _phoneBook = SyncableMap.fromList(activePhoneNumbers);
+
+    // 5. Сохраняем результат
+    await saveAllToStorage();
+    notifyListeners();
+
+    _log.inf('compress: removed $dealsRemoved deals, $phoneBookRemoved phone book entries, $audioFilesRemoved audio files');
+    return StorageCompressResult(dealsRemoved: dealsRemoved, phoneBookRemoved: phoneBookRemoved, audioFilesRemoved: audioFilesRemoved);
+  }
+}
+
+class StorageCompressResult {
+  final int dealsRemoved;
+  final int phoneBookRemoved;
+  final int audioFilesRemoved;
+
+  const StorageCompressResult({required this.dealsRemoved, required this.phoneBookRemoved, required this.audioFilesRemoved});
+
+  bool get hasChanges => dealsRemoved > 0 || phoneBookRemoved > 0 || audioFilesRemoved > 0;
 }

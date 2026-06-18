@@ -1,6 +1,8 @@
+import 'package:coldcall/core/di.dart';
 import 'package:coldcall/core/simple_change_notifier.dart';
 import 'package:coldcall/entities/deal.dart';
 import 'package:coldcall/entities/user_settings.dart';
+import 'package:coldcall/storage/storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,6 +59,27 @@ class UserSessionVm with SimpleChangeNotifier {
       await prefs.setString(_storageKey, all.toJson());
     } catch (e) {
       print(e);
+    }
+  }
+
+  /// Возвращает null пока операция не завершена, затем — результат сжатия.
+  StorageCompressResult? _lastCompressResult;
+  StorageCompressResult? get lastCompressResult => _lastCompressResult;
+
+  bool _isCompressing = false;
+  bool get isCompressing => _isCompressing;
+
+  Future<void> compressStorage() async {
+    if (_isCompressing) return;
+    notify(() {
+      _isCompressing = true;
+      _lastCompressResult = null;
+    });
+    try {
+      final result = await di<Storage>().compress();
+      notify(() => _lastCompressResult = result);
+    } finally {
+      notify(() => _isCompressing = false);
     }
   }
 }
