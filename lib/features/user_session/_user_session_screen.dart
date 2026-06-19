@@ -128,11 +128,11 @@ class UserSessionScreen extends StatelessWidget {
                   ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.compress),
               label: Text(model.isCompressing ? 'Сжатие...' : 'Сжать базу данных'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.deepOrange.withOpacity(0.5),
-              ),
+              // style: ElevatedButton.styleFrom(
+              //   backgroundColor: Colors.deepOrange,
+              //   foregroundColor: Colors.white,
+              //   disabledBackgroundColor: Colors.deepOrange.withOpacity(0.5),
+              // ),
             ),
           ),
         ],
